@@ -22,6 +22,7 @@ module.exports = (sequelize, Sequelize) => {
       wsCode: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: true,
         validate: {
           isInt: {
             msg: "WS Code must be an integer",
@@ -71,10 +72,20 @@ module.exports = (sequelize, Sequelize) => {
           },
         },
       },
+      stockQuantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          isInt: {
+            msg: "Stock Quantity must be an integer",
+          },
+          min: 1, // Ensure stock quantity is non-negative
+        },
+      }, 
       tags: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
-        validate: {
+        validate: { 
           // Validate array of tags (can add more custom validation for tags)
           isArray(value) {
             if (value && !Array.isArray(value)) {
@@ -95,8 +106,8 @@ module.exports = (sequelize, Sequelize) => {
       },
     },
     {
-      tableName: 'products', // Optional: Set table name explicitly
-      timestamps: false,    // Optional: Disable timestamps if you don't need them
+      tableName: 'products', 
+      timestamps: false,    
     }
   );
 

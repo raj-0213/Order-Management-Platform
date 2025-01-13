@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middlewares/uploadMiddleware");
+const {verifyToken,isAdmin} = require("../middlewares/authMiddleware");
+const {validateRequest} = require("../middlewares/validateRequest");
+const { productSchema } = require("../validations/product.validation");
+
 const { 
     createProduct, 
     getAllProducts, 
@@ -8,14 +12,15 @@ const {
     updateProduct, 
     deleteProduct } = require("../controllers/product.controller");
 
-router.post("/create", upload.array("images", 10), createProduct); 
+router.post("/create", verifyToken, isAdmin , upload.array("images", 10), createProduct); 
 
-router.get("/", getAllProducts);
+router.get("/", verifyToken, isAdmin, getAllProducts);
 
-router.get("/:id", getProductById);
+router.get("/:id", verifyToken, isAdmin, getProductById);
 
-router.put("/:id", upload.array("images"), updateProduct);
+router.put("/:id", verifyToken,isAdmin, upload.array("images"),updateProduct);
 
-router.delete("/:id", deleteProduct);
+router.delete("/:id", isAdmin, deleteProduct);
+
 
 module.exports = router;

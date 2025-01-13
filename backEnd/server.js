@@ -16,6 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "localhost"; 
 
+app.use(express.json());
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: false }));
 
