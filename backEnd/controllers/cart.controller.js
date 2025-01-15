@@ -1,7 +1,6 @@
 const { Cart,Product } = require('../models');
 // console.log(Product);
 // console.log(Cart);
- 
 exports.addToCart = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
@@ -14,24 +13,24 @@ exports.addToCart = async (req, res) => {
 
     // Check if the requested quantity exceeds available stock
     if (quantity > product.stockQuantity) {
-      return res.status(400).json({ error: `Only ${product.stockQuantity} items are available` });
+      return res.status(400).json({ error: `No items are available` });
     }
 
     // Check if the product is already in the cart
     const existingCartItem = await Cart.findOne({ where: { userId, productId } });
     if (existingCartItem) {
-      // If the product is already in the cart, check if the user is trying to add more than available stock
+      // If the product is already in the cart, validate the total quantity against stock
       if (existingCartItem.quantity + quantity > product.stockQuantity) {
-        return res.status(400).json({ error: `Only ${product.stockQuantity - existingCartItem.quantity} items are available` });
+        return res
+          .status(400)
+          .json({
+            error: `Only ${product.stockQuantity - existingCartItem.quantity} items are available`,
+          });
       }
-      
+
       // Update the quantity of the product in the cart
       existingCartItem.quantity += quantity;
       await existingCartItem.save();
-
-      // Update the stock quantity of the product
-      product.stockQuantity -= quantity;
-      await product.save();
 
       return res.status(200).json({ message: 'Cart updated', cartItem: existingCartItem });
     }
@@ -39,16 +38,13 @@ exports.addToCart = async (req, res) => {
     // Add a new product to the cart
     const cartItem = await Cart.create({ userId, productId, quantity });
 
-    // Deduct stock quantity
-    product.stockQuantity -= quantity;
-    await product.save();
-
     res.status(201).json({ message: 'Product added to cart', cartItem });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Add a product to the cart
 // exports.addToCart = async (req, res) => {

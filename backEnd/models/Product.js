@@ -79,7 +79,7 @@ module.exports = (sequelize, Sequelize) => {
           isInt: {
             msg: "Stock Quantity must be an integer",
           },
-          min: 1, // Ensure stock quantity is non-negative
+          min: 0, // Ensure stock quantity is non-negative
         },
       }, 
       tags: {

@@ -24,12 +24,11 @@ exports.register = async (req, res) => {
   }
 };
 
-
 // Authenticate a user (Login)
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(req.body);
+
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
@@ -41,7 +40,8 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Incorrect password' });
     }
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, "secret", {
+    // Generate JWT with only userId
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || "secret", {
       expiresIn: '7d',
     });
 

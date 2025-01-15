@@ -20,7 +20,7 @@ router.get("/:id", verifyToken, isAdmin, getProductById);
 
 router.put("/:id", verifyToken,isAdmin, upload.array("images"),updateProduct);
 
-router.delete("/:id", isAdmin, deleteProduct);
+router.delete("/:id",verifyToken, isAdmin, deleteProduct);
 
 
 module.exports = router;

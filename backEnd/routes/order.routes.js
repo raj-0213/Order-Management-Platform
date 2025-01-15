@@ -12,12 +12,14 @@
 
 const express = require('express');
 const router = express.Router();
-const { completeOrder, updateOrderStatus, getAllOrders } = require('../controllers/order.controller');
+const { completeOrder, updateOrderStatus, getAllOrders, getOrders } = require('../controllers/order.controller');
 const { verifyToken, isAdmin, isCustomer } = require('../middlewares/authMiddleware');
 
 // Routes
 router.post('/complete', verifyToken, isCustomer, completeOrder);
 router.put('/updatestatus', verifyToken, isAdmin, updateOrderStatus);
 router.get('/allorders', verifyToken, isAdmin, getAllOrders);
+router.get('/:userId', verifyToken, getOrders);
+
 
 module.exports = router;
