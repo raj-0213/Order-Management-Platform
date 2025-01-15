@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const db = require("./database/config");
 const { sequelize } = require('./models'); 
+const cors = require('cors');
 // console.log("Sequelize instance:", sequelize);
 
 const {productRoutes} = require("./routes");
@@ -19,6 +20,12 @@ const HOST = process.env.HOST || "localhost";
 app.use(express.json());
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: false }));
+app.use(cors({
+  origin: 'http://localhost:3000', // Make sure this matches the frontend origin exactly
+  methods: 'GET,POST,PUT,DELETE',  // Allow the necessary methods
+  allowedHeaders: 'Content-Type,Authorization', // Allow necessary headers
+  credentials: true, // Allow cookies (if needed)
+}));
 
 app.use("/product",productRoutes);
 app.use("/cart",cartRoutes);

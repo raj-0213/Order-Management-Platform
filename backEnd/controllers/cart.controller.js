@@ -1,10 +1,20 @@
-const { Cart,Product } = require('../models');
-// console.log(Product);
-// console.log(Cart);
+const jwt = require('jsonwebtoken'); // Import jwt for decoding the token
+const { Product, Cart } = require('../models'); // Assuming you have your models properly set up
+
 exports.addToCart = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    // Decode the token from the Authorization header
+    const token = req.headers.authorization.split(' ')[1]; // Assuming the token is passed as "Bearer <token>"
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Authorization token is missing' });
+    }
 
+    const decoded = jwt.verify(token, "secret"); // Verify and decode the token
+    const userId = decoded.userId; // Extract the userId from the token
+
+    const { productId, quantity } = req.body;
+    console.log(req.body);
     // Fetch the product to check its stockQuantity
     const product = await Product.findByPk(productId);
     if (!product) {
@@ -44,6 +54,7 @@ exports.addToCart = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 // Add a product to the cart

@@ -147,7 +147,7 @@ exports.getAllProducts = async (req, res) => {
 
     // Return the response with products and pagination info
     res.status(200).json({
-      products,
+      products, 
       pagination: {
         page: pageNumber,
         totalPages: totalPages,
@@ -159,6 +159,65 @@ exports.getAllProducts = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+exports.getProductByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params; // Extract categoryId from the route parameter
+    const { search, page = 1, limit = 10 } = req.query;
+
+    // Default pagination settings
+    const pageNumber = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+    const offset = (pageNumber - 1) * pageSize;
+
+    // Initialize the search condition
+    let searchCondition = { categoryId }; // Filter by categoryId
+
+    if (search) {
+      // Add search conditions for name and wsCode
+      searchCondition = {
+        ...searchCondition,
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${search}%` } },
+          Sequelize.where(
+            Sequelize.cast(Sequelize.col("wsCode"), "TEXT"),
+            { [Op.like]: `%${search}%` }
+          ),
+        ],
+      };
+    }
+
+    // Fetch products based on categoryId, search condition, and pagination
+    const products = await Product.findAll({
+      where: searchCondition,
+      limit: pageSize,
+      offset: offset,
+    });
+
+    // Count the total number of products in the specified category
+    const totalProducts = await Product.count({
+      where: searchCondition,
+    });
+
+    // Calculate total pages for pagination
+    const totalPages = Math.ceil(totalProducts / pageSize);
+
+    // Return the response with products and pagination info
+    res.status(200).json({
+      products,
+      pagination: {
+        page: pageNumber,
+        totalPages: totalPages,
+        totalProducts: totalProducts,
+      },
+    });
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 
 // exports.getProductBySearch = async (req, res) => {

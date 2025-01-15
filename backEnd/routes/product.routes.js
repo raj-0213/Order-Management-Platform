@@ -10,11 +10,14 @@ const {
     getAllProducts, 
     getProductById, 
     updateProduct, 
-    deleteProduct } = require("../controllers/product.controller");
+    deleteProduct, 
+    getProductByCategory} = require("../controllers/product.controller");
 
 router.post("/create", verifyToken, isAdmin , upload.array("images", 10), createProduct); 
 
-router.get("/", verifyToken, isAdmin, getAllProducts);
+router.get("/", getAllProducts);
+
+router.get("/category/:categoryId", verifyToken, getProductByCategory);
 
 router.get("/:id", verifyToken, isAdmin, getProductById);
 
