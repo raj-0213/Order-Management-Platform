@@ -17,7 +17,8 @@ const AppRoutes = () => {
                     <Routes>
                         {/* Home Page with Product List */}
                         <Route path="/" element={<ProductList />} />
-                        
+
+                        {/* <Route path="/pl" element={<ProductList />} /> */}
                         {/* Authentication Pages */}
                         <Route path="/signup" element={<SignUpPage />} />
                         <Route path="/login" element={<SignInPage />} />

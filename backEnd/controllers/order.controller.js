@@ -1,6 +1,8 @@
 const { Order, OrderDetails, Cart, Product } = require('../models');
 const db = require('sequelize');
 const sequelize = db.sequelize;
+const jwt = require('jsonwebtoken'); // Import jwt for decoding the token
+
 
 // Complete an order
 // exports.completeOrder = async (req, res) => {
@@ -41,7 +43,15 @@ const sequelize = db.sequelize;
 
 exports.completeOrder = async (req, res) => {
   try {
-    const { userId } = req.body;
+    // Decode the token from the Authorization header
+    const token = req.headers.authorization.split(' ')[1]; // Assuming the token is passed as "Bearer <token>"
+
+    if (!token) {
+      return res.status(401).json({ error: 'Authorization token is missing' });
+    }
+
+    const decoded = jwt.verify(token, "secret"); // Verify and decode the token
+    const userId = decoded.userId; // Extract the userId from the token
 
     // Get all items from the user's cart
     const cartItems = await Cart.findAll({
@@ -150,8 +160,15 @@ exports.getAllOrders = async (req, res) => {
 // Get all orders for a user
 exports.getOrders = async (req, res) => {
   try {
-    const { userId } = req.params;
-    // console.log(userId);
+     // Decode the token from the Authorization header
+     const token = req.headers.authorization.split(' ')[1]; // Assuming the token is passed as "Bearer <token>"
+
+     if (!token) {
+       return res.status(401).json({ error: 'Authorization token is missing' });
+     }
+ 
+     const decoded = jwt.verify(token, "secret"); // Verify and decode the token
+     const userId = decoded.userId; // Extract the userId from the token
 
     const orders = await Order.findAll({
       where: { userId },
