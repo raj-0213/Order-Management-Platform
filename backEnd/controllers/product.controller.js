@@ -14,6 +14,8 @@ exports.createProduct = async (req, res) => {
     //   return res.status(400).json({ error: "WS Code must be unique" });
     // }
 
+    // console.log(req.body);
+
     const product = await Product.create({
       name,
       wsCode,
@@ -105,7 +107,7 @@ const { Op,Sequelize  } = require("sequelize");
 
 exports.getAllProducts = async (req, res) => {
   try {
-    const { search, page = 1, limit = 10 } = req.query;
+    const { search, page = 1, limit = 12 } = req.query;
     // console.log("Request Query: ", req.query); // Log the entire query object
 
     // Default pagination settings

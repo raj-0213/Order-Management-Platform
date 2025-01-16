@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { Box,Button, Typography, CircularProgress, Snackbar, Alert, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import axios from 'axios';
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [user, setUser] = useState({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -22,7 +24,20 @@ const MyOrders = () => {
         const response = await axios.get('http://localhost:5000/order/myorder', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setOrders(response.data.orders);
+
+        const userResponse = await axios.get('http://localhost:5000/user/profile/', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setUser(userResponse.data.user); // Set user details
+
+        if (statusFilter) {
+          // Filter orders based on status
+          setOrders(response.data.orders.filter(order => order.status === statusFilter));
+        } else {
+          setOrders(response.data.orders);
+        }
+
       } catch (error) {
         console.error('Error fetching orders:', error.message);
         setNotification('Failed to load orders.');
@@ -32,21 +47,47 @@ const MyOrders = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [statusFilter]);
 
   const handleCloseNotification = () => {
     setNotification('');
   };
 
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return 'green';
+      case 'shipped':
+        return 'blue';
+      case 'delivered':
+        return 'gray';
+      case 'pending':
+        return 'orange';
+      default:
+        return 'black';
+    }
+  };
+
   return (
     <Box sx={{ marginTop: 3, padding: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ fontFamily: 'Roboto, sans-serif', fontWeight: 'bold' }}
-      >
+      <Typography variant="h4" gutterBottom sx={{ fontFamily: 'Roboto, sans-serif', fontWeight: 'bold' }}>
         My Orders
       </Typography>
+
+      <FormControl fullWidth sx={{ marginBottom: 2 }}>
+        <InputLabel>Filter by Status</InputLabel>
+        <Select value={statusFilter} onChange={handleStatusFilterChange} label="Filter by Status">
+          <MenuItem value="">All</MenuItem>
+          <MenuItem value="pending">Pending</MenuItem>
+          <MenuItem value="confirmed">Confirmed</MenuItem>
+          <MenuItem value="shipped">Shipped</MenuItem>
+          <MenuItem value="delivered">Delivered</MenuItem>
+        </Select>
+      </FormControl>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 2 }}>
@@ -68,20 +109,41 @@ const MyOrders = () => {
               },
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: 'Roboto, sans-serif',
-                fontWeight: 'bold',
-                fontSize:'1.4rem',
-                marginBottom: 1,
-              }}
-            >
+            <Typography variant="h6" sx={{ fontFamily: 'Roboto, sans-serif', fontWeight: 'bold', fontSize: '1.4rem', marginBottom: 1 }}>
               Order No. {order.id}
             </Typography>
-            <Typography>  
-              <strong>Status:</strong> {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+
+            {/* User Name and Address */}
+            <Typography>
+              <strong>Customer Name:</strong> {user.username}
             </Typography>
+            <Typography>
+              <strong>Shipping Address:</strong> {user.address}
+            </Typography>
+
+            {/* Order Status */}
+            {/* <Typography sx={{ textAlign: 'right', color: getStatusColor(order.status), bgcolor:`order.status`,fontWeight: 'bold' }}>
+              <strong>Status:</strong> {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            </Typography> */}
+            <Button
+              sx={{
+                color: 'white',
+                textAlign: 'center',
+                backgroundColor: getStatusColor(order.status),
+                padding: '6px 16px',
+                borderRadius: '20px',
+                fontWeight: 'bold',
+                textTransform: 'none',
+                fontFamily: 'Arial, sans-serif',
+                marginTop: 1,
+                ml:120,
+                width: 'auto',
+              }}
+              
+            >
+              <strong>{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</strong>
+            </Button>
+
             <Typography>
               <strong>Total Amount:</strong> ₹{order.totalAmount}
             </Typography>
@@ -99,9 +161,14 @@ const MyOrders = () => {
                     borderRadius: 2,
                   }}
                 >
-                  <Typography sx={{fontFamily:'Roboto',fontSize:'1.2rem'}}>{item.Product.name}</Typography>
+                  <Typography sx={{ fontFamily: 'Roboto', fontSize: '1.2rem' }}>
+                    <strong>Product Name:</strong> {item.Product.name}
+                  </Typography>
                   <Typography>
-                    ₹{item.price} x {item.quantity} = ₹{item.price * item.quantity}
+                    <strong>Quantity:</strong> {item.quantity}
+                  </Typography>
+                  <Typography>
+                    <strong>Total:</strong> ₹{item.price * item.quantity}
                   </Typography>
                 </Box>
               ))}
@@ -122,3 +189,4 @@ const MyOrders = () => {
 };
 
 export default MyOrders;
+

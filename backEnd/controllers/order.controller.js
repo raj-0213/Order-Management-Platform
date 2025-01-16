@@ -82,7 +82,7 @@ exports.completeOrder = async (req, res) => {
       }
 
       // Deduct the purchased quantity from the stock
-      product.stockQuantity -= item.quantity;
+      // product.stockQuantity -= item.quantity;
       totalAmount += item.quantity * product.salesPrice;
 
       // Save the updated product stock to the database
@@ -131,18 +131,61 @@ exports.updateOrderStatus = async (req, res) => {
   const { orderId, status } = req.body;
 
   try {
+    // Validate the provided status
     if (!['pending', 'confirmed', 'shipped', 'delivered'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const order = await Order.findByPk(orderId);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
+    // Find the order by ID
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: OrderDetails, include: Product }], // Include order details and associated products
+    });
 
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // If changing status to "confirmed", validate stock and deduct quantities
+    if (order.status === 'pending' && status === 'confirmed') {
+      const insufficientStockProducts = [];
+
+      // Validate stock for each product in the order
+      for (const detail of order.OrderDetails) {
+        const product = detail.Product;
+
+        // Check stock availability
+        if (detail.quantity > product.stockQuantity) {
+          insufficientStockProducts.push({
+            productId: product.id,
+            productName: product.name,
+            availableStock: product.stockQuantity,
+          });
+          continue; // Skip further processing for this product
+        }
+
+        // Deduct stock quantity
+        product.stockQuantity -= detail.quantity;
+
+        // Save the updated product stock
+        await product.save();
+      }
+
+      // If any product has insufficient stock, return an error
+      if (insufficientStockProducts.length > 0) {
+        return res.status(400).json({
+          error: 'Insufficient stock for some products',
+          insufficientStockProducts,
+        });
+      }
+    }
+
+    // Update the order status
     order.status = status;
     await order.save();
 
     res.status(200).json({ message: 'Order status updated', order });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };

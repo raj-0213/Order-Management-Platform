@@ -98,7 +98,7 @@ exports.getCart = async (req, res) => {
 
     const cartItems = await Cart.findAll({
       where: { userId },
-      include: [{ model: Product, attributes: ['name', 'salesPrice', 'mrp'] }],
+      include: [{ model: Product, attributes: ['name', 'salesPrice', 'mrp','images'] }],
     });
 
     res.status(200).json({ cartItems });

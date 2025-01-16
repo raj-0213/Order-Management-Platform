@@ -9,7 +9,7 @@ const {productRoutes} = require("./routes");
 const {cartRoutes} = require("./routes");
 const {orderRoutes} = require("./routes");
 const {userRoutes} = require("./routes");
-
+// const {categoryRoutes} = require("./routes");
 
 require("dotenv").config();
 
@@ -31,7 +31,7 @@ app.use("/product",productRoutes);
 app.use("/cart",cartRoutes);
 app.use("/order",orderRoutes);
 app.use("/user",userRoutes);
-
+// app.use("/category",categoryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running");
