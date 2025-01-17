@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -16,16 +16,22 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import TextField from '@mui/material/TextField';
 import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
+import CloseIcon from '@mui/icons-material/Close';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import CakeIcon from '@mui/icons-material/Cake';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import Alert from '@mui/material/Alert';
-import { Card, CardMedia, CardContent, Chip, Snackbar } from '@mui/material';
+import { Card, CardMedia, CardContent, Chip, Snackbar, Modal, Badge } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
 
 const pages = ['Home', 'Cart', 'My Orders'];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+const settings = ['Profile', 'Logout'];
 
 function Navbar() {
     const [anchorElUser, setAnchorElUser] = useState(null);
@@ -34,14 +40,47 @@ function Navbar() {
     const [notification, setNotification] = useState(false);
     const [quantityExceedNotification, setQuantityExceedNotification] = useState(false);
     const [userQuantity, setUserQuantity] = useState(1);
+    const [openProfileModal, setOpenProfileModal] = useState(false);
+    const [userData, setUserData] = useState(null);
+
     const navigate = useNavigate();
 
     const token = localStorage.getItem('authToken'); // Check if user is logged in
 
+    const username = userData?.username || 'U';
+    const avatarLetter = username.charAt(0).toUpperCase();
+
+    useEffect(() => {
+        if (openProfileModal) {
+            fetchUserProfile();
+        }
+    }, [openProfileModal]);
+
+    const fetchUserProfile = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/user/profile', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            // console.log(response.data.user);
+            setUserData(response.data.user);
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+        }
+    };
+
+    const handleOpenProfileModal = () => {
+        setOpenProfileModal(true);
+        setAnchorElUser(null);
+    };
+
+    const handleCloseProfileModal = () => {
+        setOpenProfileModal(false);
+    };
+
     const handleNavigateToProductList = () => {
         // Redirect to the product list page and pass the search results
-        navigate('/pl', { state: { searchResults } });
-      };
+        navigate('/', { state: { searchResults } });
+    };
 
     const handleOpenUserMenu = (event) => {
         setAnchorElUser(event.currentTarget);
@@ -210,40 +249,106 @@ function Navbar() {
                         <Box sx={{ ml: 2, flexGrow: 0 }}>
                             <Tooltip title="Open settings">
                                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                    <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
+                                    <Avatar>{avatarLetter}</Avatar>
                                 </IconButton>
                             </Tooltip>
                             <Menu
-                                sx={{ mt: '45px' }}
-                                id="menu-appbar"
                                 anchorEl={anchorElUser}
-                                anchorOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                keepMounted
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
                                 open={Boolean(anchorElUser)}
                                 onClose={handleCloseUserMenu}
+                                sx={{ mt: '45px' }}
                             >
-                                {settings.map((setting) => (
-                                    <MenuItem
-                                        key={setting}
-                                        onClick={() =>
-                                            setting === 'Logout' ? handleLogout() : handleCloseUserMenu()
-                                        }
-                                    >
-                                        <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-                                    </MenuItem>
-                                ))}
+                                <MenuItem onClick={handleOpenProfileModal}>Profile</MenuItem>
+                                <MenuItem onClick={handleLogout}>Logout</MenuItem>
                             </Menu>
                         </Box>
                     )}
                 </Toolbar>
             </Container>
+            {/* Profile Modal */}
+            <Modal open={openProfileModal} onClose={handleCloseProfileModal}>
+                <Box sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 420,
+                    bgcolor: '#ffffff',
+                    boxShadow: 24,
+                    p: 4,
+                    borderRadius: 3,
+                    textAlign: 'center',
+                    fontFamily: 'Arial, sans-serif',
+                }}>
+                    {/* Close Button */}
+                    <IconButton
+                        sx={{ position: 'absolute', top: 10, right: 10, color: '#f44336' }}
+                        onClick={handleCloseProfileModal}
+                    >
+                        <CloseIcon />
+                    </IconButton>
+
+                    {/* User Avatar */}
+                    <Avatar
+                        sx={{
+                            bgcolor: '#3f51b5',
+                            width: 70,
+                            height: 70,
+                            fontSize: 30,
+                            margin: 'auto',
+                            textTransform: 'uppercase'
+                        }}
+                    >
+                        {userData.username.charAt(0)}
+                    </Avatar>
+
+                    {/* User Details */}
+                    <Typography variant="h6" sx={{ mt: 2, fontWeight: 'bold', color: '#3f51b5' }}>
+                        {userData.username}
+                    </Typography>
+
+                    <Box sx={{ mt: 2, textAlign: 'left', px: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <EmailIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                            <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                <strong>Email:</strong> {userData.email}
+                            </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <PhoneIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                            <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                <strong>Mobile:</strong> {userData.mobileNo}
+                            </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <CakeIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                            <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                <strong>DOB:</strong> {userData.dob}
+                            </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <HomeIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                            <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                <strong>Address:</strong> {userData.address}
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    {/* Edit Profile Button */}
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<EditIcon />}
+                        sx={{ mt: 3, textTransform: 'none' }}
+                    >
+                        Edit Profile
+                    </Button>
+                </Box>
+            </Modal>
+
         </AppBar>
     );
 }
