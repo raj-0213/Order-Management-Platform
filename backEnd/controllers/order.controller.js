@@ -132,7 +132,7 @@ exports.updateOrderStatus = async (req, res) => {
 
   try {
     // Validate the provided status
-    if (!['pending', 'confirmed', 'shipped', 'delivered'].includes(status)) {
+    if (!['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
@@ -143,6 +143,21 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Prevent status rollback or further updates if the order is cancelled
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ error: 'Order is already cancelled and cannot be updated further.' });
+    }
+
+    // Prevent status rollback after reaching a certain stage (confirmed, shipped, delivered)
+    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
+    const currentStatusIndex = statusOrder.indexOf(order.status);
+    const newStatusIndex = statusOrder.indexOf(status);
+
+    // Ensure the new status is either the same or a progression
+    if (newStatusIndex < currentStatusIndex) {
+      return res.status(400).json({ error: `Cannot rollback order status from '${order.status}' to '${status}'` });
     }
 
     // If changing status to "confirmed", validate stock and deduct quantities
@@ -189,6 +204,69 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// exports.updateOrderStatus = async (req, res) => {
+//   const { orderId, status } = req.body;
+
+//   try {
+//     // Validate the provided status
+//     if (!['pending', 'confirmed', 'shipped', 'delivered','cancelled'].includes(status)) {
+//       return res.status(400).json({ error: 'Invalid status' });
+//     }
+
+//     // Find the order by ID
+//     const order = await Order.findByPk(orderId, {
+//       include: [{ model: OrderDetails, include: Product }], // Include order details and associated products
+//     });
+
+//     if (!order) {
+//       return res.status(404).json({ error: 'Order not found' });
+//     }
+
+//     // If changing status to "confirmed", validate stock and deduct quantities
+//     if (order.status === 'pending' && status === 'confirmed') {
+//       const insufficientStockProducts = [];
+
+//       // Validate stock for each product in the order
+//       for (const detail of order.OrderDetails) {
+//         const product = detail.Product;
+
+//         // Check stock availability
+//         if (detail.quantity > product.stockQuantity) {
+//           insufficientStockProducts.push({
+//             productId: product.id,
+//             productName: product.name,
+//             availableStock: product.stockQuantity,
+//           });
+//           continue; // Skip further processing for this product
+//         }
+
+//         // Deduct stock quantity
+//         product.stockQuantity -= detail.quantity;
+
+//         // Save the updated product stock
+//         await product.save();
+//       }
+
+//       // If any product has insufficient stock, return an error
+//       if (insufficientStockProducts.length > 0) {
+//         return res.status(400).json({
+//           error: 'Insufficient stock for some products',
+//           insufficientStockProducts,
+//         });
+//       }
+//     }
+
+//     // Update the order status
+//     order.status = status;
+//     await order.save();
+
+//     res.status(200).json({ message: 'Order status updated', order });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 // For Admin Only
 exports.getAllOrders = async (req, res) => {

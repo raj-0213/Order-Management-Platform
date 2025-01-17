@@ -17,7 +17,7 @@ router.post("/create", verifyToken, isAdmin , upload.array("images", 10), create
 
 router.get("/", getAllProducts);
 
-router.get("/category/:categoryId", verifyToken, getProductByCategory);
+// router.get("/category/:categoryId", verifyToken, getProductByCategory);
 
 router.get("/:id", verifyToken, isAdmin, getProductById);
 

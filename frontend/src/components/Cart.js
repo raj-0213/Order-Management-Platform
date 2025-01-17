@@ -15,12 +15,14 @@ import {
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [notification, setNotification] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -29,6 +31,7 @@ const Cart = () => {
 
       if (!token) {
         setNotification('Please log in to view the cart.');
+        navigate('/login');
         setLoading(false);
         return;
       }
@@ -48,6 +51,10 @@ const Cart = () => {
 
     fetchCart();
   }, []);
+
+  const handleContinueShoppingClick = () => {
+    navigate('/'); 
+  };
 
   const handleRemoveItem = async (productId) => {
     const token = localStorage.getItem('authToken');
@@ -75,12 +82,12 @@ const Cart = () => {
       cart.map((item) =>
         item.productId === productId
           ? {
-              ...item,
-              quantity:
-                action === 'increment'
-                  ? item.quantity + 1
-                  : Math.max(item.quantity - 1, 1),
-            }
+            ...item,
+            quantity:
+              action === 'increment'
+                ? item.quantity + 1
+                : Math.max(item.quantity - 1, 1),
+          }
           : item
       )
     );
@@ -287,7 +294,63 @@ const Cart = () => {
       </Box>
 
       {/* Order Summary Section */}
+
       <Box sx={{ flex: 1 }}>
+        <Card
+          sx={{
+            padding: 2,
+            backgroundColor: '#fff',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+            borderRadius: 2,
+          }}
+        >
+          <CardContent>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 'bold', marginBottom: 4 }}
+            >
+              Order Summary
+            </Typography>
+            <Typography sx={{ mb: 2 }}>
+              Total Items: <b>{cart.length}</b>
+            </Typography>
+            <Typography sx={{ color: 'green', mb: 2 }}>
+              Total Savings: ₹<b>{calculateSavings()}</b>
+            </Typography>
+            <Typography>
+              Total Payable Amount: ₹<b>{calculateTotal()}</b>
+            </Typography>
+          </CardContent>
+          <CardActions>
+            {cart.length === 0 ? (
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={handleContinueShoppingClick}
+              >
+                Continue Shopping
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={handlePlaceOrder}
+                disabled={orderLoading}
+              >
+                {orderLoading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'Place Order'
+                )}
+              </Button>
+            )}
+          </CardActions>
+        </Card>
+      </Box>
+
+      {/* <Box sx={{ flex: 1 }}>
         <Card
           sx={{
             padding: 2,
@@ -329,7 +392,7 @@ const Cart = () => {
             </Button>
           </CardActions>
         </Card>
-      </Box>
+      </Box> */}
 
       {/* Notification Snackbar */}
       <Snackbar

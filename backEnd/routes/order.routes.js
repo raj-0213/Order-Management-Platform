@@ -16,7 +16,7 @@ const { completeOrder, updateOrderStatus, getAllOrders, getOrders } = require('.
 const { verifyToken, isAdmin, isCustomer } = require('../middlewares/authMiddleware');
 
 // Routes
-router.post('/complete', verifyToken, isCustomer, completeOrder);
+router.post('/complete', verifyToken, completeOrder);
 router.put('/updatestatus', verifyToken, isAdmin, updateOrderStatus);
 router.get('/allorders', verifyToken, isAdmin, getAllOrders);
 router.get('/myorder', verifyToken, getOrders);

@@ -5,5 +5,5 @@ module.exports = {
   orderRoutes: require("./order.routes"),
   cartRoutes: require("./cart.routes"),
   userRoutes: require("./user.routes"),
-  // categoryRoutes : require("./category.routes")
+  categoryRoutes : require("./category.routes")
 };

@@ -61,7 +61,7 @@ function Navbar() {
             const response = await axios.get('http://localhost:5000/user/profile', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            // console.log(response.data.user);
+            console.log(response.data.user);
             setUserData(response.data.user);
         } catch (error) {
             console.error('Error fetching user profile:', error);
@@ -158,9 +158,9 @@ function Navbar() {
                     {/* Desktop Navbar */}
                     <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
                         <IconButton
-                            component={Link}
+                            component={Link}    
                             to="/"
-                            sx={{ my: 2, color: '#3f51b5', display: 'block' }}
+                            sx={{ my: 2, ml: -18, color: '#3f51b5', display: 'block' }}
                         >
                             <HomeIcon />
                         </IconButton>
@@ -249,7 +249,7 @@ function Navbar() {
                         <Box sx={{ ml: 2, flexGrow: 0 }}>
                             <Tooltip title="Open settings">
                                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                    <Avatar>{avatarLetter}</Avatar>
+                                    <Avatar>{userData ? userData.username.charAt(0) : 'U'}</Avatar>
                                 </IconButton>
                             </Tooltip>
                             <Menu
@@ -289,63 +289,69 @@ function Navbar() {
                     </IconButton>
 
                     {/* User Avatar */}
-                    <Avatar
-                        sx={{
-                            bgcolor: '#3f51b5',
-                            width: 70,
-                            height: 70,
-                            fontSize: 30,
-                            margin: 'auto',
-                            textTransform: 'uppercase'
-                        }}
-                    >
-                        {userData.username.charAt(0)}
-                    </Avatar>
+                    {userData && (
+                        <Avatar
+                            sx={{
+                                bgcolor: '#3f51b5',
+                                width: 70,
+                                height: 70,
+                                fontSize: 30,
+                                margin: 'auto',
+                                textTransform: 'uppercase'
+                            }}
+                        >
+                            {userData ? userData.username.charAt(0) : 'U'}
+                        </Avatar>
+                    )}
 
                     {/* User Details */}
-                    <Typography variant="h6" sx={{ mt: 2, fontWeight: 'bold', color: '#3f51b5' }}>
-                        {userData.username}
-                    </Typography>
-
-                    <Box sx={{ mt: 2, textAlign: 'left', px: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <EmailIcon sx={{ color: '#3f51b5', mr: 1 }} />
-                            <Typography sx={{ fontSize: 16, color: '#333' }}>
-                                <strong>Email:</strong> {userData.email}
+                    {userData && (
+                        <>
+                            <Typography variant="h6" sx={{ mt: 2, fontWeight: 'bold', color: '#3f51b5' }}>
+                                Hey , {userData.username}
                             </Typography>
-                        </Box>
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <PhoneIcon sx={{ color: '#3f51b5', mr: 1 }} />
-                            <Typography sx={{ fontSize: 16, color: '#333' }}>
-                                <strong>Mobile:</strong> {userData.mobileNo}
-                            </Typography>
-                        </Box>
+                            <Box sx={{ mt: 2, textAlign: 'left', px: 3 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <EmailIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                                    <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                        <strong>Email:</strong> {userData.email}
+                                    </Typography>
+                                </Box>
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <CakeIcon sx={{ color: '#3f51b5', mr: 1 }} />
-                            <Typography sx={{ fontSize: 16, color: '#333' }}>
-                                <strong>DOB:</strong> {userData.dob}
-                            </Typography>
-                        </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <PhoneIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                                    <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                        <strong>Mobile:</strong> {userData.mobileNo}
+                                    </Typography>
+                                </Box>
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <HomeIcon sx={{ color: '#3f51b5', mr: 1 }} />
-                            <Typography sx={{ fontSize: 16, color: '#333' }}>
-                                <strong>Address:</strong> {userData.address}
-                            </Typography>
-                        </Box>
-                    </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <CakeIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                                    <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                        <strong>DOB:</strong> {userData.dob}
+                                    </Typography>
+                                </Box>
 
-                    {/* Edit Profile Button */}
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<EditIcon />}
-                        sx={{ mt: 3, textTransform: 'none' }}
-                    >
-                        Edit Profile
-                    </Button>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <HomeIcon sx={{ color: '#3f51b5', mr: 1 }} />
+                                    <Typography sx={{ fontSize: 16, color: '#333' }}>
+                                        <strong>Address:</strong> {userData.address}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
+                            {/* Edit Profile Button */}
+                            {/* <Button
+                                variant="contained"
+                                color="primary"
+                                startIcon={<EditIcon />}
+                                sx={{ mt: 3, textTransform: 'none' }}
+                            >
+                                Edit Profile
+                            </Button> */}
+                        </>
+                    )}
                 </Box>
             </Modal>
 

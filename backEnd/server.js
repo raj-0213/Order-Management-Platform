@@ -9,7 +9,7 @@ const {productRoutes} = require("./routes");
 const {cartRoutes} = require("./routes");
 const {orderRoutes} = require("./routes");
 const {userRoutes} = require("./routes");
-// const {categoryRoutes} = require("./routes");
+const {categoryRoutes} = require("./routes"); 
 
 require("dotenv").config();
 
@@ -21,17 +21,16 @@ app.use(express.json());
 app.use(express.json({ limit: "30mb", extended: true }));
 app.use(express.urlencoded({ limit: "30mb", extended: false }));
 app.use(cors({
-  origin: 'http://localhost:3000', // Make sure this matches the frontend origin exactly
-  methods: 'GET,POST,PUT,DELETE',  // Allow the necessary methods
-  allowedHeaders: 'Content-Type,Authorization', // Allow necessary headers
-  credentials: true, // Allow cookies (if needed)
+  origin: 'http://localhost:3000', 
+  methods: 'GET,POST,PUT,DELETE',  
+  allowedHeaders: 'Content-Type,Authorization', 
 }));
 
 app.use("/product",productRoutes);
 app.use("/cart",cartRoutes);
 app.use("/order",orderRoutes);
 app.use("/user",userRoutes);
-// app.use("/category",categoryRoutes);
+app.use("/category",categoryRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server is running");

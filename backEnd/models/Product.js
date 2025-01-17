@@ -97,11 +97,15 @@ module.exports = (sequelize, Sequelize) => {
       categoryId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: 'Categories', // Name of the table you are referencing
+          key: 'id',           // Primary key of the Category model
+        },
         validate: {
           isInt: {
             msg: "Category ID must be an integer",
           },
-          min: 1, // Ensure the category ID is a valid positive number
+          min: 1, // Ensure stock quantity is non-negative
         },
       },
     },

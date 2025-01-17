@@ -39,6 +39,9 @@ Cart.belongsTo(User, { foreignKey: 'userId' });
 Product.hasMany(Cart, { foreignKey: 'productId' });
 Cart.belongsTo(Product, { foreignKey: 'productId' });
 
+Product.belongsTo(Category, { foreignKey: 'categoryId' });
+Category.hasMany(Product, { foreignKey: 'categoryId' });
+
 // Export all models and the sequelize instance
 module.exports = {
   sequelize,

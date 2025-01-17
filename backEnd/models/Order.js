@@ -20,12 +20,12 @@ module.exports = (sequelize, Sequelize) => {
         },
       },
       status: {
-        type: DataTypes.ENUM('pending', 'confirmed', 'shipped', 'delivered'),
+        type: DataTypes.ENUM('pending', 'confirmed', 'shipped', 'delivered','cancelled'),
         defaultValue: 'pending',
         validate: {
           isIn: {
-            args: [['pending', 'confirmed', 'shipped', 'delivered']],
-            msg: "Status must be one of 'pending', 'confirmed', 'shipped', or 'delivered'",
+            args: [['pending', 'confirmed', 'shipped', 'delivered','cancelled']],
+            msg: "Status must be one of 'pending', 'confirmed', 'shipped', 'delivered' or 'cancelled'",
           },
         },
       },
