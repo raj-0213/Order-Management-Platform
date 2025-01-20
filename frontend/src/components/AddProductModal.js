@@ -24,6 +24,7 @@ const AddProductModal = ({ open, onClose }) => {
     stockQuantity: "",
     tags: [],
     categoryId: "",
+    description:"",
     images: [],
   });
 
@@ -82,6 +83,7 @@ const AddProductModal = ({ open, onClose }) => {
     formDataObj.append("stockQuantity", formData.stockQuantity);
     formDataObj.append("tags", JSON.stringify(formData.tags)); 
     formDataObj.append("categoryId", formData.categoryId);
+    formDataObj.append("description", formData.description);
   
     formData.images.forEach((image) => {
       formDataObj.append("images", image);
@@ -200,6 +202,8 @@ const AddProductModal = ({ open, onClose }) => {
             required
             margin="normal"
           />
+          <TextField label="Description" name="description" value={formData.description} onChange={handleChange} fullWidth required margin="normal" multiline rows={3} />
+
 
           {/* Upload Images Button */}
           <Button

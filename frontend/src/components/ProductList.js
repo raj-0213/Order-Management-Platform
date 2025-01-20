@@ -176,6 +176,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import ProductCard from './ProductCard';
 import axios from 'axios';
+import { Description } from '@mui/icons-material';
 
 const ProductList = () => {
   const location = useLocation();
@@ -201,7 +202,7 @@ const ProductList = () => {
       try {
         const response = await axios.get('http://localhost:5000/product/');
         setProducts(response.data.products);
-        console.log("Data : ", response.data.products);
+        // console.log("Data : ", response.data.products);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -338,8 +339,9 @@ const ProductList = () => {
                   price: product.salesPrice,
                   quantity: product.stockQuantity,
                   mrp: product.mrp,
+                  description: product.description,
                   tags: product.tags || [],
-                  image: product.images?.[0] || '',
+                  image: product.images || '',
                 }}
                 showNotification={handleShowNotification}
               />

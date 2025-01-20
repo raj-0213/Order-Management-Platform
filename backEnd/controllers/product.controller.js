@@ -1,10 +1,11 @@
 const { Product,Category } = require("../models");
-const { productSchema } = require('../validations/product.validation');
+const { validationResult } = require("express-validator");
+
 
 exports.createProduct = async (req, res) => {
   try {
 
-    const { name, wsCode, salesPrice, mrp, packageSize,stockQuantity, tags, categoryId } = req.body;
+    const { name, description, wsCode, salesPrice, mrp, packageSize, stockQuantity, tags, categoryId } = req.body;
     // console.log(req.body);
     
     if (!req.files || req.files.length === 0) {
@@ -23,6 +24,7 @@ exports.createProduct = async (req, res) => {
 
     const product = await Product.create({
       name,
+      description,
       wsCode,
       salesPrice,
       mrp,

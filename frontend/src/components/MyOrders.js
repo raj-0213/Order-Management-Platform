@@ -197,6 +197,8 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Typography, CircularProgress, Snackbar, Alert, Select, MenuItem, FormControl, InputLabel, Pagination } from '@mui/material';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -204,6 +206,7 @@ const MyOrders = () => {
   const [notification, setNotification] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [user, setUser] = useState({});
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1); // Track current page
   const ordersPerPage = 5; // Number of orders per page
 
@@ -214,6 +217,7 @@ const MyOrders = () => {
 
       if (!token) {
         setNotification('Please log in to view your orders.');
+        navigate('/login');
         setLoading(false);
         return;
       }

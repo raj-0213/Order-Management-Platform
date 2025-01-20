@@ -98,7 +98,7 @@ export const AdminDashboard = () => {
       console.log(response.data.user);
       setProfile(response.data.user);
     } catch (error) {
-      showSnackbar("Failed to fetch categories", "error");
+      showSnackbar("Failed to fetch Profile", "error");
     }
   };
 
@@ -110,7 +110,7 @@ export const AdminDashboard = () => {
       });
       setCategories(response.data.categories);
     } catch (error) {
-      showSnackbar("Failed to fetch categories", "error");
+      showSnackbar("You are not Admin /  Failed to fetch categories", "error");
     }
   };
 
@@ -544,6 +544,7 @@ export const AdminDashboard = () => {
 
               {/* Changed Category Field to TextField */}
               <TextField label="Category" fullWidth margin="dense" value={editProduct.categoryId} onChange={(e) => setEditProduct({ ...editProduct, categoryId: e.target.value })} />
+              <TextField label="Description" fullWidth  margin="dense" value={editProduct.description} onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })} />
 
               {/* Image Upload and Delete Section */}
               <Typography variant="subtitle1" sx={{ mt: 2 }}>Images</Typography>

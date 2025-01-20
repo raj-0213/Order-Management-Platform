@@ -151,7 +151,7 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     // Prevent status rollback after reaching a certain stage (confirmed, shipped, delivered)
-    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
+    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered','cancelled'];
     const currentStatusIndex = statusOrder.indexOf(order.status);
     const newStatusIndex = statusOrder.indexOf(status);
 

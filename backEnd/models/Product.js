@@ -19,6 +19,15 @@ module.exports = (sequelize, Sequelize) => {
           },
         },
       },
+      description: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "Product Description cannot be empty",
+          },
+        },
+      },
       wsCode: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -33,12 +42,12 @@ module.exports = (sequelize, Sequelize) => {
       salesPrice: {
         type: DataTypes.FLOAT,
         allowNull: false,
-        validate: {
-          isFloat: {
-            msg: "Sales Price must be a valid number",
-          },
-          min: 0.01, // Sales price should be greater than 0
-        },
+        // validate: {
+        //    isFloat: {
+        //      msg: "Sales Price must be a valid number",
+        //    },
+        //    min: 0.01, // Sales price should be greater than 0
+        // },
       },
       mrp: {
         type: DataTypes.FLOAT,
@@ -53,12 +62,12 @@ module.exports = (sequelize, Sequelize) => {
       packageSize: {
         type: DataTypes.FLOAT,
         allowNull: false,
-        validate: {
-          isFloat: {
-            msg: "Package Size must be a valid number",
-          },
-          min: 0.01, // Package size should be greater than 0
-        },
+        // validate: {
+        //   isFloat: {
+        //     msg: "Package Size must be a valid number",
+        //   },
+        //   min: 0.01, // Package size should be greater than 0
+        // },
       },
       images: {
         type: DataTypes.ARRAY(DataTypes.STRING),
@@ -97,15 +106,15 @@ module.exports = (sequelize, Sequelize) => {
       categoryId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: 'Categories', // Name of the table you are referencing
-          key: 'id',           // Primary key of the Category model
-        },
+        // references: {
+        //   model: 'Categories', // Name of the table you are referencing
+        //   key: 'id',           // Primary key of the Category model
+        // },
         validate: {
           isInt: {
             msg: "Category ID must be an integer",
           },
-          min: 1, // Ensure stock quantity is non-negative
+          min: 1, 
         },
       },
     },

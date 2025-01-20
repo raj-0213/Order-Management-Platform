@@ -205,7 +205,7 @@ const Cart = () => {
             >
               <Box
                 component="img"
-                src={item.Product.images}
+                src={item.Product.images[0]}
                 alt={item.Product.name}
                 sx={{
                   width: 80,
