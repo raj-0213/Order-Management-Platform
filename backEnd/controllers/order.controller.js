@@ -175,7 +175,7 @@ exports.updateOrderStatus = async (req, res) => {
             productName: product.name,
             availableStock: product.stockQuantity,
           });
-          continue; // Skip further processing for this product
+          continue; 
         }
 
         // Deduct stock quantity

@@ -60,3 +60,80 @@ exports.getUserProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// GET: Fetch all users (Admin Only)
+exports.getAllUsers =  async (req, res) => {
+    try {
+        const users = await User.findAll({ attributes: { exclude: ['password'] } }); 
+        res.status(200).json({ success: true, users });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};
+
+
+exports.editProfile = async (req, res) => {
+  try {
+    const id = req.params;
+    const { username, email, password, mobileNo, dob, address } = req.body;
+
+    let updateData = { username, email, mobileNo, dob, address };
+
+    // Hash password if user wants to update it
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await User.update(updateData, {
+      where: { id: id },
+      returning: true,
+    });
+
+    res.status(200).json({ message: 'Profile updated successfully', user: updatedUser[1][0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.changeUserRole = async (req, res) => {
+  try {
+    const { userId, newRole } = req.body;
+    // console.log(req.body);
+
+    const user = await User.findByPk(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.role = newRole;
+    await user.save();
+
+    res.status(200).json({ message: 'User role updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Find the user by ID
+    const user = await User.findOne({ where: { id } });
+
+    // If user doesn't exist
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete the user
+    await User.destroy({
+      where: { id }
+    });
+
+    return res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};

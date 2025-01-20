@@ -43,14 +43,20 @@ function Navbar() {
     const [openProfileModal, setOpenProfileModal] = useState(false);
     const [userData, setUserData] = useState(null);
 
+    const [cartCount, setCartCount] = useState(0);
+
+
     const navigate = useNavigate();
 
-    const token = localStorage.getItem('authToken'); // Check if user is logged in
+    const token = localStorage.getItem('authToken');
 
     const username = userData?.username || 'U';
     const avatarLetter = username.charAt(0).toUpperCase();
 
     useEffect(() => {
+        if (token) {
+            fetchCartCount();
+        }
         if (openProfileModal) {
             fetchUserProfile();
         }
@@ -61,10 +67,21 @@ function Navbar() {
             const response = await axios.get('http://localhost:5000/user/profile', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            console.log(response.data.user);
+            // console.log(response.data.user);
             setUserData(response.data.user);
         } catch (error) {
             console.error('Error fetching user profile:', error);
+        }
+    };
+
+    const fetchCartCount = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/cart/', {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            setCartCount(response.data.cartItems.length);
+        } catch (error) {
+            console.error('Error fetching cart count:', error);
         }
     };
 
@@ -156,31 +173,69 @@ function Navbar() {
                     </Typography>
 
                     {/* Desktop Navbar */}
-                    <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+
+                    <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', gap: 3 }}>
+                        {/* Home Icon */}
+                        <IconButton component={Link} to="/" sx={{ color: '#3f51b5' }}>
+                            <HomeIcon />
+                        </IconButton>
+
+                        {/* Cart Icon with Badge */}
+                        <Badge badgeContent={cartCount} color="secondary">
+                            <IconButton component={Link} to="/cart" sx={{color: '#3f51b5' }}>
+                                <ShoppingCartIcon />
+                            </IconButton>
+                        </Badge>
+
+                        {/* Orders Icon */}
+                        <IconButton component={Link} to="/myorders" sx={{ color: '#3f51b5' }}>
+                            <AssignmentIcon />
+                        </IconButton>
+                    </Box>
+
+
+                    {/* <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
                         <IconButton
-                            component={Link}    
+                            component={Link}
                             to="/"
                             sx={{ my: 2, ml: -18, color: '#3f51b5', display: 'block' }}
                         >
                             <HomeIcon />
                         </IconButton>
-                        <IconButton
+
+                        <IconButton component={Link} to="/cart" sx={{ ml: 2, my: 2, color: '#3f51b5', display: 'block', position: 'relative' }}>
+                            <Badge
+                                badgeContent={cartCount}
+                                color="secondary"
+                                sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: 0,
+                                    transform: 'translate(50%, -50%)'
+                                }}
+                            >
+                                <ShoppingCartIcon />
+                            </Badge>
+                        </IconButton> */}
+
+
+                    {/* <IconButton
                             component={Link}
                             to="/cart"
                             sx={{ ml: 2, my: 2, color: '#3f51b5', display: 'block' }}
                         >
                             <ShoppingCartIcon />
-                        </IconButton>
-                        <IconButton
-                            component={Link}
-                            to="/myorders"
-                            sx={{ ml: 2, my: 2, color: '#3f51b5', display: 'block' }}
-                        >
-                            <AssignmentIcon />
-                        </IconButton>
-                    </Box>
+                    //     </IconButton> */}
+                    {/* //     <IconButton
+                        //         component={Link}
+                        //         to="/myorders"
+                        //         sx={{ ml: 2, my: 2, color: '#3f51b5', display: 'block' }}
+                        //     >
+                        //         <AssignmentIcon />
+                        //     </IconButton>
+                        // </Box> */}
 
-                    {/* Search Bar */}
+                        {/* Search Bar */}
                     <Box sx={{ flexGrow: 1, mx: 2, display: 'flex', alignItems: 'center' }}>
                         <TextField
                             placeholder="Search products by name and wsCode"

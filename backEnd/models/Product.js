@@ -42,12 +42,12 @@ module.exports = (sequelize, Sequelize) => {
       salesPrice: {
         type: DataTypes.FLOAT,
         allowNull: false,
-        // validate: {
-        //    isFloat: {
-        //      msg: "Sales Price must be a valid number",
-        //    },
-        //    min: 0.01, // Sales price should be greater than 0
-        // },
+        validate: {
+           isFloat: {
+             msg: "Sales Price must be a valid number",
+           },
+           min: 0.01, // Sales price should be greater than 0
+        },
       },
       mrp: {
         type: DataTypes.FLOAT,
@@ -62,12 +62,12 @@ module.exports = (sequelize, Sequelize) => {
       packageSize: {
         type: DataTypes.FLOAT,
         allowNull: false,
-        // validate: {
-        //   isFloat: {
-        //     msg: "Package Size must be a valid number",
-        //   },
-        //   min: 0.01, // Package size should be greater than 0
-        // },
+        validate: {
+          isFloat: {
+            msg: "Package Size must be a valid number",
+          },
+          min: 0.01, // Package size should be greater than 0
+        },
       },
       images: {
         type: DataTypes.ARRAY(DataTypes.STRING),
@@ -88,7 +88,7 @@ module.exports = (sequelize, Sequelize) => {
           isInt: {
             msg: "Stock Quantity must be an integer",
           },
-          min: 0, // Ensure stock quantity is non-negative
+          min: 0, 
         },
       }, 
       tags: {

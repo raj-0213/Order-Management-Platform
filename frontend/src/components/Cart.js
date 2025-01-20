@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   CardActions,
+  Badge
 } from '@mui/material';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -53,7 +54,7 @@ const Cart = () => {
   }, []);
 
   const handleContinueShoppingClick = () => {
-    navigate('/'); 
+    navigate('/');
   };
 
   const handleRemoveItem = async (productId) => {
@@ -71,6 +72,7 @@ const Cart = () => {
 
       setCart(cart.filter((item) => item.productId !== productId));
       setNotification('Item removed from cart');
+      window.location.reload();
     } catch (error) {
       console.error('Error removing item:', error.message);
       setNotification('Failed to remove item.');
@@ -136,6 +138,7 @@ const Cart = () => {
       }
     } finally {
       setOrderLoading(false);
+      window.location.reload();
     }
   };
 
@@ -156,6 +159,9 @@ const Cart = () => {
         (item.Product.mrp - item.Product.salesPrice) * item.quantity,
       0
     );
+
+  // const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0); // Total items in cart
+
 
   return (
     <Box

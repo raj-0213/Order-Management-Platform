@@ -83,20 +83,21 @@ exports.updateProduct = async (req, res) => {
       imageUrls = product.images; // Retain existing images if no new ones are provided
     }
 
-    console.log(imageUrls); // Check the image URLs before updating
+    // console.log(imageUrls); // Check the image URLs before updating
 
     // Update the product
     const updatedProduct = await product.update({
-      name: name || product.name,
-      wsCode: Number(wsCode) || product.wsCode,
-      salesPrice: Number(salesPrice) || product.salesPrice,
-      mrp: Number(mrp) || product.mrp,
-      packageSize: Number(packageSize) || product.packageSize,
-      stockQuantity: Number(stockQuantity) || product.stockQuantity,
+      name: name ?? product.name,
+      wsCode: wsCode !== undefined ? Number(wsCode) : product.wsCode,
+      salesPrice: salesPrice !== undefined ? Number(salesPrice) : product.salesPrice,
+      mrp: mrp !== undefined ? Number(mrp) : product.mrp,
+      packageSize: packageSize !== undefined ? Number(packageSize) : product.packageSize,
+      stockQuantity: stockQuantity !== undefined ? Number(stockQuantity) : product.stockQuantity, // Fix here
       tags: parsedTags,
-      categoryId: Number(categoryId) || product.categoryId,
-      images: imageUrls, // Updated image URLs
+      categoryId: categoryId !== undefined ? Number(categoryId) : product.categoryId,
+      images: imageUrls,
     });
+    
 
     res.status(200).json({ updatedProduct });
   } catch (error) {

@@ -27,7 +27,7 @@ import ImageSlider from './ImageSlider';
 
 const ProductCard = ({ product, showNotification }) => {
   const { name, price, quantity, description, tags, image, mrp } = product;
-  console.log("Product : ", product);
+  // console.log("Product : ", product);
   const [userQuantity, setUserQuantity] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
   const [open, setOpen] = useState(false);
@@ -72,6 +72,7 @@ const ProductCard = ({ product, showNotification }) => {
       );
 
       showNotification('Product added to cart successfully!', 'success');
+      window.location.reload();
     } catch (error) {
       console.error('Error adding product to cart:', error.response?.data || error.message);
       showNotification('Failed to add product to cart', 'error');

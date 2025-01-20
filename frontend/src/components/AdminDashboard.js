@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, ShoppingCart, Layers, LogOut, Plus, ChevronDown, Edit, Trash } from 'lucide-react';
+import { Package, ShoppingCart, Layers, LogOut, Plus, ChevronDown, Edit, Trash, Users } from 'lucide-react';
 import AddProductModal from '../components/AddProductModal';
 import { Search, Delete, HourglassEmpty, CheckCircle, LocalShipping, CheckCircleOutline, Cancel } from '@mui/icons-material';
-
+import { useNavigate } from 'react-router-dom';
 import { Alert, AlertTitle } from '@mui/material';
 
 import {
@@ -60,13 +60,21 @@ export const AdminDashboard = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openDeleteUserDialog, setOpenDeleteUserDialog] = useState(false);
   const [profile, setProfile] = useState({});
 
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [categories, setCategories] = useState([]);
   const [categoryName, setCategoryName] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [openRoleDialog, setOpenRoleDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
+  const navigate = useNavigate();
   // Pagination states for products and orders
   const [productPage, setProductPage] = useState(1);
   const [orderPage, setOrderPage] = useState(1);
@@ -78,9 +86,57 @@ export const AdminDashboard = () => {
     fetchProducts();
     fetchOrders();
     fetchCategories();
+    fetchAllUsers();
   }, []);
 
+  const fetchAllUsers = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/user/allusers/", {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      // console.log(response.data.users);
+      setUsers(response.data.users);
+    } catch (error) {
+      showSnackbar("Failed to fetch Users", "error");
+    }
+  }
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      const authToken = localStorage.getItem('authToken');
+      await axios.put("http://localhost:5000/user/changerole",
+        { userId, newRole },
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      showSnackbar("User Role Updated Successfully", "success");
+      fetchAllUsers();
+      setOpenRoleDialog(false);
+    } catch (error) {
+      showSnackbar("Failed to update user role", "error");
+    }
+  };
+
+  const filteredUsers = users.filter(user => filter === 'all' || user.role === filter);
+
   const authToken = localStorage.getItem("authToken");
+
+  const handleProductSearch = async (e) => {
+    const query = e.target.value;
+    // console.log(query);
+    setSearchTerm(query);
+
+    try {
+      const response = await axios.get(`http://localhost:5000/product/?search=${query}`);
+      if (response.data && response.data.products) {
+        setProducts(response.data.products);
+        navigate('/admin', { state: { searchResults: response.data.products } });
+      }
+    } catch (error) {
+      console.error('Error fetching search results:', error.message); // Log any errors
+    }
+  };
+
+
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -95,12 +151,35 @@ export const AdminDashboard = () => {
       const response = await axios.get("http://localhost:5000/user/profile/", {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      console.log(response.data.user);
+      // console.log(response.data.user);
       setProfile(response.data.user);
     } catch (error) {
       showSnackbar("Failed to fetch Profile", "error");
     }
   };
+
+  const deleteUser = async (userId) => {
+    const authToken = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`http://localhost:5000/user/deleteuser/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (response.ok) {
+        setOpenDeleteDialog(false);
+        fetchAllUsers();
+        showSnackbar('User deleted successfully', "success");
+      } else {
+        showSnackbar('Failed to delete user', "error");
+      }
+    } catch (error) {
+      showSnackbar('Error deleting user', "error");
+    }
+  };
+
+
 
   // Function to fetch categories
   const fetchCategories = async () => {
@@ -193,6 +272,7 @@ export const AdminDashboard = () => {
 
 
   const handleEditClick = (product) => {
+    console.log(product);
     setEditProduct(product);
     setOpenEditModal(true);
   };
@@ -255,7 +335,7 @@ export const AdminDashboard = () => {
       });
 
       const data = await response.json();
-      console.log("API Response:", data);
+      // console.log("API Response:", data);
 
       if (response.ok && data.orders) {
         setOrders(data.orders);
@@ -293,18 +373,25 @@ export const AdminDashboard = () => {
           )
         );
         setSnackbarMessage(`Order ${orderId} status updated to ${newStatus}`);
-        setSnackbarSeverity('success'); // You can also set to 'error' or 'info' based on the result
+        setSnackbarSeverity('success');
         window.location.reload();
         setSnackbarOpen(true);
+
       } else {
         alert('Failed to update order status.');
       }
     } catch (error) {
-      // console.error('Error updating order status:', error);
-      setSnackbarMessage(`Order ${orderId} status Cannot updated to ${newStatus}`);
+      if (error.response && error.response.status === 400) {
+        setSnackbarMessage(
+          `Order ${orderId} status cannot be updated to ${newStatus} due to insufficient stock`
+        );
+      } else {
+        setSnackbarMessage(`Failed to update order ${orderId} status.`);
+      }
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
+
   };
 
   const filteredOrders = orders.filter(order =>
@@ -418,6 +505,19 @@ export const AdminDashboard = () => {
               <ListItemText primary="Categories" />
             </ListItemButton>
           </ListItem>
+
+
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={activeTab === 'users'}
+              onClick={() => setActiveTab('users')}
+            >
+              <ListItemIcon>
+                <Users />
+              </ListItemIcon>
+              <ListItemText primary="All Users" />
+            </ListItemButton>
+          </ListItem>
         </List>
 
         <Box sx={{ mt: 'auto', p: 2 }}>
@@ -456,6 +556,21 @@ export const AdminDashboard = () => {
               <Typography variant="h4" component="h1">
                 All Products
               </Typography>
+              <TextField
+                placeholder="Search Products"
+                // label="Search Products"
+                variant="outlined"
+                value={searchTerm}
+                onChange={handleProductSearch}
+                sx={{ ml:18,width: 300 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+              />
               <Button
                 variant="contained"
                 startIcon={<Plus />}
@@ -630,128 +745,12 @@ export const AdminDashboard = () => {
           </DialogActions>
         </Dialog>
 
-
-        {/* {activeTab === 'orders' && (
-          <Card className="w-full shadow-lg transition-all duration-300 hover:shadow-xl">
-            <CardHeader
-              title={<Typography variant="h6" className="font-bolder text-gray-800">Orders</Typography>}
-              action={
-                <FormControl sx={{ minWidth: 200 }}>
-                  <InputLabel>Filter by Status</InputLabel>
-                  <Select
-                    value={orderStatusFilter}
-                    onChange={(e) => setOrderStatusFilter(e.target.value)}
-                    label="Filter by Status"
-                    sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "gray" } } }}
-                  >
-                    <MenuItem value="all">All Status</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="confirmed">Confirmed</MenuItem>
-                    <MenuItem value="shipped">Shipped</MenuItem>
-                    <MenuItem value="delivered">Delivered</MenuItem>
-                  </Select>
-                </FormControl>
-              }
-            />
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table className="w-full">
-                  <TableHead>
-                    <TableRow>
-                      {['Order ID', 'Products', 'Total', 'Status'].map((header) => (
-                        <TableCell
-                          key={header}
-                          className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 transition-all duration-200"
-                        >
-                          {header}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredOrders.slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => (
-                      <TableRow
-                        key={order.id}
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-all duration-150 transform hover:scale-105"
-                      >
-                        <TableCell className="px-6 py-4">
-                          <Typography variant="body2" className="text-sm font-medium text-gray-900">
-                            {order.id}
-                          </Typography>
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <div className="space-y-1">
-                            {order.OrderDetails?.map((item, index) => (
-                              <Typography key={index} variant="body2" className="text-sm text-gray-800">
-                                <span className="font-medium">{item.Product.name}</span>
-                                <span className="text-gray-500"> × {item.quantity}</span>
-                              </Typography>
-                            )) || (
-                                <Alert severity="info" className="max-w-xs">
-                                  <AlertTitle>No products available</AlertTitle>
-                                  No products available
-                                </Alert>
-                              )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <Typography variant="body2" className="text-sm font-semibold text-gray-900">
-                            ₹{order.totalAmount}
-                          </Typography>
-                        </TableCell>
-                        <TableCell className="px-6 py-4">
-                          <FormControl fullWidth>
-                            <InputLabel>Status</InputLabel>
-                            <Select
-                              value={order.status}
-                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                              label="Status"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '& fieldset': { borderColor: 'gray' },
-                                },
-                                '.MuiSelect-icon': { color: '#1f2937' },
-                              }}
-                            >
-                              {['pending', 'confirmed', 'shipped', 'delivered','cancelled'].map((status) => (
-                                <MenuItem sx={{ m: 1 }}
-                                  key={status}
-                                  value={status}
-                                  className="flex items-center space-x-2"
-                                >
-                                  {status === 'pending' && <HourglassEmpty sx={{ mr: 0.5 }} fontSize="small" />}
-                                  {status === 'confirmed' && <CheckCircle sx={{ mr: 0.5 }} fontSize="small" />}
-                                  {status === 'shipped' && <LocalShipping sx={{ mr: 0.5 }} fontSize="small" />}
-                                  {status === 'delivered' && <CheckCircleOutline sx={{ mr: 0.5 }} fontSize="small" />}
-                                  {status === 'cancelled' && <Cancel sx={{ mr: 0.5 }} fontSize="small" />}
-                                  <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-
-            <Pagination
-              count={Math.ceil(filteredOrders.length / ordersPerPage)}
-              page={orderPage}
-              onChange={handleOrderChangePage}
-              sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
-            />
-          </Card>
-        )} */}
-
         {activeTab === 'orders' && (
           <Card className="w-full shadow-lg transition-all duration-300 hover:shadow-xl">
             <CardHeader
               title={<Typography variant="h6" className="font-bolder text-gray-800">Orders</Typography>}
               action={
-                <FormControl sx={{ minWidth: 200 }}>
+                <FormControl sx={{ minWidth: 200, display: 'flex', justifyContent: 'center' }}>
                   <InputLabel>Filter by Status</InputLabel>
                   <Select
                     value={orderStatusFilter}
@@ -770,13 +769,13 @@ export const AdminDashboard = () => {
             />
             <CardContent>
               <div className="overflow-x-auto">
-                <Table className="w-full">
+                <Table className="w-full text-center">
                   <TableHead>
                     <TableRow>
-                      {["Order ID", "Products", "Available Stock", "Total", "Status"].map((header) => (
+                      {["Order ID", "User ID", "Order Details", "Products", "Requested Quantity", "Available Stock", "Total", "Status"].map((header) => (
                         <TableCell
                           key={header}
-                          className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 transition-all duration-200"
+                          className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 transition-all duration-200"
                         >
                           {header}
                         </TableCell>
@@ -784,22 +783,34 @@ export const AdminDashboard = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredOrders.slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => (
+                    {filteredOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => (
                       <TableRow
                         key={order.id}
                         className="border-b border-gray-100 hover:bg-gray-50 transition-all duration-150 transform hover:scale-105"
                       >
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="px-6 py-4 text-center">
                           <Typography variant="body2" className="text-sm font-medium text-gray-900">
                             {order.id}
                           </Typography>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="px-6 py-4 text-center">
+                          <Typography variant="body2" className="text-sm font-medium text-gray-900">
+                            {order.userId}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell className="px-6 py-4 text-center">
+                          <Typography variant="body2" className="text-sm font-medium text-gray-900 text-center">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell className="px-6 py-4 text-center">
                           <div className="space-y-1">
                             {order.OrderDetails?.map((item, index) => (
                               <Typography key={index} variant="body2" className="text-sm text-gray-800">
                                 <span className="font-medium">{item.Product.name}</span>
-                                <span className="text-gray-500"> × {item.quantity}</span>
+                                {/* <span className="text-gray-500"> × {item.quantity}</span> */}
                               </Typography>
                             )) || (
                                 <Alert severity="info" className="max-w-xs">
@@ -809,7 +820,20 @@ export const AdminDashboard = () => {
                               )}
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+
+                        <TableCell className="px-6 py-4 text-center">
+                          <div className="space-y-1 text-center">
+                            {order.OrderDetails?.map((item, index) => (
+                              <Typography key={index} variant="body2" className="text-sm text-gray-800 text-center">
+                                {item.quantity}
+                              </Typography>
+                            )) || (
+                                <Typography variant="body2" className="text-sm text-gray-500 text-center">N/A</Typography>
+                              )}
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="px-6 py-4 text-center">
                           <div className="space-y-1">
                             {order.OrderDetails?.map((item, index) => (
                               <Typography key={index} variant="body2" className="text-sm text-gray-800">
@@ -820,12 +844,12 @@ export const AdminDashboard = () => {
                               )}
                           </div>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="px-6 py-4 text-center">
                           <Typography variant="body2" className="text-sm font-semibold text-gray-900">
                             ₹{order.totalAmount}
                           </Typography>
                         </TableCell>
-                        <TableCell className="px-6 py-4">
+                        <TableCell className="px-6 py-4 text-center">
                           <FormControl fullWidth>
                             <InputLabel>Status</InputLabel>
                             <Select
@@ -907,8 +931,8 @@ export const AdminDashboard = () => {
                     ),
                   }}
                   sx={{
-                    width: 250, mr: 2, "& .MuiOutlinedInput-root": {
-                      borderRadius: 6,
+                    width: 250, ml:20,mr: -2, "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
                     },
                   }}
                 />
@@ -918,6 +942,7 @@ export const AdminDashboard = () => {
                 startIcon={<Plus />}
                 color="primary"
                 onClick={() => setOpenModal(true)}
+                sx={{ height:"53px"}}
               >
                 Add New Category
               </Button>
@@ -1006,6 +1031,149 @@ export const AdminDashboard = () => {
             </Snackbar>
           </Box>
         )}
+
+        {activeTab == 'users' &&
+          <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+              <Typography variant="h4" component="h1" sx={{ fontFamily: 'Arial, sans-serif' }}>
+                All Users
+              </Typography>
+              <TextField
+                select
+                label="Filter by Role"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                variant="outlined"
+                size="small"
+                sx={{ width: 200 }}
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="admin">Admin</MenuItem>
+                <MenuItem value="customer">Customer</MenuItem>
+              </TextField>
+            </Box>
+            <TableContainer component={Paper} sx={{ boxShadow: 3, borderRadius: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Username</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Mobile No.</TableCell>
+                    <TableCell>Actions</TableCell>
+                    <TableCell>Delete</TableCell> {/* New Column */}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow
+                      key={user.id}
+                      sx={{
+                        '&:hover': { backgroundColor: '#f0f0f0' },
+                        transition: 'background-color 0.3s ease', // Hover effect
+                      }}
+                    >
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role === 'admin' ? 'Admin' : 'Customer'}
+                          color={user.role === 'admin' ? 'success' : 'primary'}
+                        />
+                      </TableCell>
+                      <TableCell>{user.mobileNo || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setOpenRoleDialog(true);
+                          }}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'white',
+                              color: 'primary.main',
+                              fontWeight: 'bold',
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                        >
+                          Change Role
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setOpenDeleteUserDialog(true);
+                          }}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'error.main',
+                              color: 'white',
+                              transform: 'scale(1.05)',
+                            },
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* Role Change Dialog */}
+            <Dialog open={openRoleDialog} onClose={() => setOpenRoleDialog(false)}>
+              <DialogTitle>Change User Role</DialogTitle>
+              <DialogContent>
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    value={selectedUser?.role || ''}
+                    onChange={(e) => handleRoleChange(selectedUser?.id, e.target.value)}
+                    label="Role"
+                  >
+                    <MenuItem value="customer">Customer</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </Select>
+                </FormControl>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setOpenRoleDialog(false)}>Cancel</Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Delete User Confirmation Dialog */}
+            <Dialog sx={{
+              '& .MuiDialog-paper': {
+                margin: 'auto', // Centers the dialog on the screen
+                width: '400px', // Adjust width as necessary
+              },
+            }} open={openDeleteUserDialog} onClose={() => setOpenDeleteUserDialog(false)}>
+              <DialogTitle>Are you sure you want to Delete this User?</DialogTitle>
+              <DialogActions>
+                <Button onClick={() => setOpenDeleteUserDialog(false)}>Cancel</Button>
+                <Button
+                  onClick={() => {
+                    deleteUser(selectedUser.id);
+                    setOpenDeleteUserDialog(false)
+                  }}
+                  color="error"
+                >
+                  Yes, Delete
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+        }
       </Box>
     </Box>
   );

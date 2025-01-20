@@ -201,7 +201,10 @@ const ProductList = () => {
       setLoading(true);
       try {
         const response = await axios.get('http://localhost:5000/product/');
-        setProducts(response.data.products);
+        const filteredProducts = response.data.products.filter(product => product.stockQuantity >= 1);
+        // console.log("Filtered Products : ", filteredProducts);
+        setProducts(filteredProducts);
+        // setProducts(response.data.products);
         // console.log("Data : ", response.data.products);
       } catch (err) {
         setError(err.message);
