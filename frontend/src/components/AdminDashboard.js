@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Package, ShoppingCart, Layers, LogOut, Plus, ChevronDown, Edit, Trash } from 'lucide-react';
 import AddProductModal from '../components/AddProductModal';
-import { Search, Delete, HourglassEmpty, CheckCircle, LocalShipping, CheckCircleOutline,Cancel } from '@mui/icons-material';
+import { Search, Delete, HourglassEmpty, CheckCircle, LocalShipping, CheckCircleOutline, Cancel } from '@mui/icons-material';
 
 import { Alert, AlertTitle } from '@mui/material';
 
@@ -294,6 +294,7 @@ export const AdminDashboard = () => {
         );
         setSnackbarMessage(`Order ${orderId} status updated to ${newStatus}`);
         setSnackbarSeverity('success'); // You can also set to 'error' or 'info' based on the result
+        window.location.reload();
         setSnackbarOpen(true);
       } else {
         alert('Failed to update order status.');
@@ -301,7 +302,7 @@ export const AdminDashboard = () => {
     } catch (error) {
       // console.error('Error updating order status:', error);
       setSnackbarMessage(`Order ${orderId} status Cannot updated to ${newStatus}`);
-      setSnackbarSeverity('error'); 
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
   };
@@ -492,7 +493,7 @@ export const AdminDashboard = () => {
                     <CardContent>
                       <Typography variant="h6">{product.name}</Typography>
                       <Stack direction="column" spacing={0.5}>
-                        <Typography variant="body2" sx={{textDecoration: 'line-through', color: 'grey' }}>
+                        <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'grey' }}>
                           MRP: ₹{product.mrp}
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.95rem', color: 'green' }}>
@@ -544,7 +545,7 @@ export const AdminDashboard = () => {
 
               {/* Changed Category Field to TextField */}
               <TextField label="Category" fullWidth margin="dense" value={editProduct.categoryId} onChange={(e) => setEditProduct({ ...editProduct, categoryId: e.target.value })} />
-              <TextField label="Description" fullWidth  margin="dense" value={editProduct.description} onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })} />
+              <TextField label="Description" fullWidth margin="dense" value={editProduct.description} onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })} />
 
               {/* Image Upload and Delete Section */}
               <Typography variant="subtitle1" sx={{ mt: 2 }}>Images</Typography>
@@ -630,7 +631,7 @@ export const AdminDashboard = () => {
         </Dialog>
 
 
-        {activeTab === 'orders' && (
+        {/* {activeTab === 'orders' && (
           <Card className="w-full shadow-lg transition-all duration-300 hover:shadow-xl">
             <CardHeader
               title={<Typography variant="h6" className="font-bolder text-gray-800">Orders</Typography>}
@@ -743,7 +744,134 @@ export const AdminDashboard = () => {
               sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
             />
           </Card>
+        )} */}
+
+        {activeTab === 'orders' && (
+          <Card className="w-full shadow-lg transition-all duration-300 hover:shadow-xl">
+            <CardHeader
+              title={<Typography variant="h6" className="font-bolder text-gray-800">Orders</Typography>}
+              action={
+                <FormControl sx={{ minWidth: 200 }}>
+                  <InputLabel>Filter by Status</InputLabel>
+                  <Select
+                    value={orderStatusFilter}
+                    onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    label="Filter by Status"
+                    sx={{ "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "gray" } } }}
+                  >
+                    <MenuItem value="all">All Status</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="confirmed">Confirmed</MenuItem>
+                    <MenuItem value="shipped">Shipped</MenuItem>
+                    <MenuItem value="delivered">Delivered</MenuItem>
+                  </Select>
+                </FormControl>
+              }
+            />
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table className="w-full">
+                  <TableHead>
+                    <TableRow>
+                      {["Order ID", "Products", "Available Stock", "Total", "Status"].map((header) => (
+                        <TableCell
+                          key={header}
+                          className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 transition-all duration-200"
+                        >
+                          {header}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredOrders.slice((orderPage - 1) * ordersPerPage, orderPage * ordersPerPage).map((order) => (
+                      <TableRow
+                        key={order.id}
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-all duration-150 transform hover:scale-105"
+                      >
+                        <TableCell className="px-6 py-4">
+                          <Typography variant="body2" className="text-sm font-medium text-gray-900">
+                            {order.id}
+                          </Typography>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <div className="space-y-1">
+                            {order.OrderDetails?.map((item, index) => (
+                              <Typography key={index} variant="body2" className="text-sm text-gray-800">
+                                <span className="font-medium">{item.Product.name}</span>
+                                <span className="text-gray-500"> × {item.quantity}</span>
+                              </Typography>
+                            )) || (
+                                <Alert severity="info" className="max-w-xs">
+                                  <AlertTitle>No products available</AlertTitle>
+                                  No products available
+                                </Alert>
+                              )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <div className="space-y-1">
+                            {order.OrderDetails?.map((item, index) => (
+                              <Typography key={index} variant="body2" className="text-sm text-gray-800">
+                                {item.Product.stockQuantity}
+                              </Typography>
+                            )) || (
+                                <Typography variant="body2" className="text-sm text-gray-500">N/A</Typography>
+                              )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <Typography variant="body2" className="text-sm font-semibold text-gray-900">
+                            ₹{order.totalAmount}
+                          </Typography>
+                        </TableCell>
+                        <TableCell className="px-6 py-4">
+                          <FormControl fullWidth>
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              label="Status"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': { borderColor: 'gray' },
+                                },
+                                '.MuiSelect-icon': { color: '#1f2937' },
+                              }}
+                            >
+                              {["pending", "confirmed", "shipped", "delivered", "cancelled"].map((status) => (
+                                <MenuItem sx={{ m: 1 }}
+                                  key={status}
+                                  value={status}
+                                  className="flex items-center space-x-2"
+                                >
+                                  {status === "pending" && <HourglassEmpty sx={{ mr: 0.5 }} fontSize="small" />}
+                                  {status === "confirmed" && <CheckCircle sx={{ mr: 0.5 }} fontSize="small" />}
+                                  {status === "shipped" && <LocalShipping sx={{ mr: 0.5 }} fontSize="small" />}
+                                  {status === "delivered" && <CheckCircleOutline sx={{ mr: 0.5 }} fontSize="small" />}
+                                  {status === "cancelled" && <Cancel sx={{ mr: 0.5 }} fontSize="small" />}
+                                  <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+
+            <Pagination
+              count={Math.ceil(filteredOrders.length / ordersPerPage)}
+              page={orderPage}
+              onChange={handleOrderChangePage}
+              sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+            />
+          </Card>
         )}
+
 
         {/* Snackbar for notifications */}
         <Snackbar
