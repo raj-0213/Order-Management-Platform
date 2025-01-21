@@ -2,11 +2,11 @@ const express = require("express");
 const router = express.Router();
 const upload = require("../middlewares/uploadMiddleware");
 const {verifyToken,isAdmin} = require("../middlewares/authMiddleware");
-const {validateRequest} = require("../middlewares/validateRequest");
+// const {validateRequest} = require("../middlewares/validateRequest");
 const { validateProduct } = require("../validators/productvalidation");
 
 
-const { 
+const { productController : {
     createProduct, 
     getAllProducts, 
     getProductById, 
@@ -14,7 +14,8 @@ const {
     deleteProduct,
     getAllProductsforAdmin,
     revertProduct, 
-} = require("../controllers/product.controller");
+}
+} = require("../controllers");
 
 router.post("/create", verifyToken, isAdmin , upload.array("images", 10), validateProduct, createProduct); 
 

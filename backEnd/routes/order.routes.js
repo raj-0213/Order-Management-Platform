@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { completeOrder, updateOrderStatus, getAllOrders, getOrders } = require('../controllers/order.controller');
+const { orderController : {
+    completeOrder, 
+    updateOrderStatus, 
+    getAllOrders, 
+    getOrders
+}} = require('../controllers');
 const { verifyToken, isAdmin, isCustomer } = require('../middlewares/authMiddleware');
 
 // Routes
