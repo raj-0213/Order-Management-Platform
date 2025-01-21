@@ -186,7 +186,7 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [notification, setNotification] = useState(null);
 
-  const productsPerPage = 16;
+  const productsPerPage = 8;
 
   const handleShowNotification = (message, severity = 'success') => {
     setNotification({ message, severity });

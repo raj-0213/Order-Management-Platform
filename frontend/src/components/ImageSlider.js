@@ -12,7 +12,7 @@ const ImageSlider = ({ images, name }) => {
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true, // Auto-slide enabled
-    autoplaySpeed: 3000, // Slide every 3 seconds
+    autoplaySpeed: 2000, // Slide every 3 seconds
     pauseOnHover: true,
     customPaging: (i) => (
       <div

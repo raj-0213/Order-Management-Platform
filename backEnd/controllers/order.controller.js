@@ -3,44 +3,6 @@ const db = require('sequelize');
 const sequelize = db.sequelize;
 const jwt = require('jsonwebtoken'); // Import jwt for decoding the token
 
-
-// Complete an order
-// exports.completeOrder = async (req, res) => {
-//   try {
-//     const { userId } = req.body;
-
-//     // Get all items from the user's cart
-//     const cartItems = await Cart.findAll({ where: { userId }, include: [Product] });
-//     if (cartItems.length === 0) {
-//       return res.status(400).json({ error: 'Cart is empty' });
-//     }
-
-//     // Calculate the total amount
-//     const totalAmount = cartItems.reduce((total, item) => {
-//       return total + item.quantity * item.Product.salesPrice;
-//     }, 0);
-
-//     // Create a new order
-//     const order = await Order.create({ userId, status: 'pending', totalAmount });
-
-//     // Add order details for each cart item
-//     const orderDetails = cartItems.map((item) => ({
-//       orderId: order.id,
-//       productId: item.productId,
-//       quantity: item.quantity,
-//       price: item.Product.salesPrice,
-//     }));
-//     await OrderDetails.bulkCreate(orderDetails);
-
-//     // Clear the user's cart
-//     await Cart.destroy({ where: { userId } });
-
-//     res.status(201).json({ message: 'Order completed', order });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 exports.completeOrder = async (req, res) => {
   try {
     // Decode the token from the Authorization header
@@ -125,86 +87,6 @@ exports.completeOrder = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// Update order status (Admin only)
-// exports.updateOrderStatus = async (req, res) => {
-//   const { orderId, status } = req.body;
-
-//   try {
-//     // Validate the provided status
-//     if (!['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-//       return res.status(400).json({ error: 'Invalid status' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findByPk(orderId, {
-//       include: [{ model: OrderDetails, include: Product }], // Include order details and associated products
-//     });
-
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // Prevent status rollback or further updates if the order is cancelled
-//     if (order.status === 'cancelled') {
-//       return res.status(400).json({ error: 'Order is already cancelled and cannot be updated further.' });
-//     }
-
-//     // Prevent status rollback after reaching a certain stage (confirmed, shipped, delivered)
-//     const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered','cancelled'];
-//     const currentStatusIndex = statusOrder.indexOf(order.status);
-//     const newStatusIndex = statusOrder.indexOf(status);
-
-//     // Ensure the new status is either the same or a progression
-//     if (newStatusIndex < currentStatusIndex) {
-//       return res.status(400).json({ error: `Cannot rollback order status from '${order.status}' to '${status}'` });
-//     }
-
-//     // If changing status to "confirmed", validate stock and deduct quantities
-//     if (order.status === 'pending' && status === 'confirmed') {
-//       const insufficientStockProducts = [];
-
-//       // Validate stock for each product in the order
-//       for (const detail of order.OrderDetails) {
-//         const product = detail.Product;
-
-//         // Check stock availability
-//         if (detail.quantity > product.stockQuantity) {
-//           insufficientStockProducts.push({
-//             productId: product.id,
-//             productName: product.name,
-//             availableStock: product.stockQuantity,
-//           });
-//           continue; 
-//         }
-
-//         // Deduct stock quantity
-//         product.stockQuantity -= detail.quantity;
-
-//         // Save the updated product stock
-//         await product.save();
-//       }
-
-//       // If any product has insufficient stock, return an error
-//       if (insufficientStockProducts.length > 0) {
-//         return res.status(400).json({
-//           error: 'Insufficient stock for some products',
-//           insufficientStockProducts,
-//         });
-//       }
-//     }
-
-//     // Update the order status
-//     order.status = status;
-//     await order.save();
-
-//     res.status(200).json({ message: 'Order status updated', order });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 
 exports.updateOrderStatus = async (req, res) => {
   const { orderId, status } = req.body;

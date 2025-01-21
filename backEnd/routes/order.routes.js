@@ -1,15 +1,3 @@
-// const express = require('express');
-// const router = express.Router();
-// const { completeOrder, getOrders } = require('../controllers/order.controller');
-
-// // Complete an order
-// router.post('/complete', completeOrder);
-
-// // Get all orders for a user
-// router.get('/:userId', getOrders);
-
-// module.exports = router;
-
 const express = require('express');
 const router = express.Router();
 const { completeOrder, updateOrderStatus, getAllOrders, getOrders } = require('../controllers/order.controller');
