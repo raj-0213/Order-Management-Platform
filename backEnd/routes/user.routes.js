@@ -11,6 +11,6 @@ router.get('/profile', verifyToken, getUserProfile);
 router.get('/allusers',verifyToken,isAdmin,getAllUsers);
 router.put('/changerole',verifyToken,isAdmin,changeUserRole);
 router.put('/updateprofile/:id',verifyToken,editProfile);
-router.delete('/deleteuser/:id',verifyToken,isAdmin,deleteUser);
+router.put('/deleteuser/:id',verifyToken,isAdmin,deleteUser);
 
 module.exports = router;

@@ -13,7 +13,7 @@ const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 router.post('/create', verifyToken,isAdmin,createCategory);
 router.get('/', verifyToken,isAdmin,getAllCategories);
 router.put('/update/:id', verifyToken,isAdmin,updateCategory);
-router.delete('/delete/:id', verifyToken,isAdmin,deleteCategory);
+router.put('/delete/:id', verifyToken,isAdmin,deleteCategory);
 
 // router.get('/categories/:id', getCategoryById);
 

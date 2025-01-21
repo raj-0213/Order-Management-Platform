@@ -6,6 +6,7 @@ const { User } = require('../models');
 exports.verifyToken = async (req, res, next) => {
   try {
     const token = req.headers['authorization']?.split(' ')[1];
+    // console.log(token);
     if (!token) return res.status(403).json({ error: 'No token provided' });
 
     // Decode the JWT and extract the userId
@@ -27,6 +28,7 @@ exports.verifyToken = async (req, res, next) => {
 // Updated isAdmin Middleware using the database
 exports.isAdmin = async (req, res, next) => {
   try {
+    
     if (req.role!=='admin') {
       return res.status(403).json({ error: 'You are not Admin.' });
     }

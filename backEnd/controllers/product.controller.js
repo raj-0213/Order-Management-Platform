@@ -105,18 +105,40 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
+
+exports.revertProduct = async (req, res) => {
+  const {productId} = req.params;
+
+  try {
+    const product = await Product.findByPk(productId);
+    
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Update the isDeleted field to false
+    product.isDeleted = false;
+    await product.save();
+
+    res.status(200).json({ message: "Product reverted successfully", product });
+  } catch (error) {
+    console.error("Error reverting product:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Delete a product
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findByPk(id);
+    const product = await Product.findOne({ where: { id, isDeleted: false } });
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    await product.destroy();
+    await product.update({ isDeleted: true, stockQuantity: 0 });
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -124,7 +146,7 @@ exports.deleteProduct = async (req, res) => {
 };
 
 // Updated getAllProducts with search and pagination functionality
-const { Op,Sequelize  } = require("sequelize");
+const { Op,Sequelize, where  } = require("sequelize");
 
 // exports.getAllProducts = async (req, res) => {
 //   try {
@@ -194,9 +216,69 @@ exports.getAllProducts = async (req, res) => {
     const pageNumber = parseInt(page, 10);
 
     // Count the total number of products matching the search condition
-    let searchCondition = {};
+    let searchCondition = { isDeleted: false };
+
     if (search) {
       searchCondition = {
+        ...searchCondition,
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${search}%` } }, // Match name partially (case-insensitive)
+          Sequelize.where(
+            Sequelize.cast(Sequelize.col("wsCode"), "TEXT"),
+            { [Op.like]: `%${search}%` } // Match wsCode partially by casting to TEXT
+          ),
+        ],
+      };
+    }
+
+    const totalProducts = await Product.count({
+      where: searchCondition,
+    });
+
+    // Set the limit to the total number of products in the database
+    const pageSize = totalProducts;
+
+    const offset = (pageNumber - 1) * pageSize;
+
+    // Fetch all products based on search condition and no pagination limit
+    const products = await Product.findAll({
+      where: searchCondition,
+      limit: pageSize,  // Limit is now set to total number of products
+      offset: offset,
+    });
+
+    // Calculate total pages for pagination
+    const totalPages = Math.ceil(totalProducts / pageSize);
+
+    // Return the response with products and pagination info
+    res.status(200).json({
+      products,
+      pagination: {
+        page: pageNumber,
+        totalPages: totalPages,
+        totalProducts: totalProducts,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Currently Working
+exports.getAllProductsforAdmin = async (req, res) => {
+  try {
+    const { search, page = 1 } = req.query;
+    
+    // Default pagination settings
+    const pageNumber = parseInt(page, 10);
+
+    // Count the total number of products matching the search condition
+    let searchCondition = { };
+
+    if (search) {
+      searchCondition = {
+        ...searchCondition,
         [Op.or]: [
           { name: { [Op.iLike]: `%${search}%` } }, // Match name partially (case-insensitive)
           Sequelize.where(

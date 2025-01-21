@@ -94,7 +94,7 @@ export const AdminDashboard = () => {
       const response = await axios.get("http://localhost:5000/user/allusers/", {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      // console.log(response.data.users);
+      console.log(response.data.users);
       setUsers(response.data.users);
     } catch (error) {
       showSnackbar("Failed to fetch Users", "error");
@@ -124,15 +124,20 @@ export const AdminDashboard = () => {
     const query = e.target.value;
     // console.log(query);
     setSearchTerm(query);
-
+    const authToken = localStorage.getItem('authToken');
     try {
-      const response = await axios.get(`http://localhost:5000/product/?search=${query}`);
+      const response = await axios.get(`http://localhost:5000/product/allproducts/?search=${query}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
       if (response.data && response.data.products) {
+        console.log(response.data.products);
         setProducts(response.data.products);
         navigate('/admin', { state: { searchResults: response.data.products } });
       }
     } catch (error) {
-      console.error('Error fetching search results:', error.message); // Log any errors
+      showSnackbar('No Products Found', "error");
     }
   };
 
@@ -161,17 +166,18 @@ export const AdminDashboard = () => {
   const deleteUser = async (userId) => {
     const authToken = localStorage.getItem('authToken');
     try {
-      const response = await fetch(`http://localhost:5000/user/deleteuser/${userId}`, {
-        method: 'DELETE',
+      const response = await axios.put(`http://localhost:5000/user/deleteuser/${userId}`, null, {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      if (response.ok) {
+      // console.log(response);
+      if (response.status === 200) {
         setOpenDeleteDialog(false);
-        fetchAllUsers();
         showSnackbar('User deleted successfully', "success");
-      } else {
+        fetchAllUsers();
+      }
+      else {
         showSnackbar('Failed to delete user', "error");
       }
     } catch (error) {
@@ -224,7 +230,7 @@ export const AdminDashboard = () => {
   // Function to delete category
   const handleDeleteCategory = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/category/delete/${selectedCategoryId}`, {
+      await axios.put(`http://localhost:5000/category/delete/${selectedCategoryId}`, null, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       showSnackbar("Category deleted successfully", "success");
@@ -272,7 +278,7 @@ export const AdminDashboard = () => {
 
 
   const handleEditClick = (product) => {
-    console.log(product);
+    // console.log(product);
     setEditProduct(product);
     setOpenEditModal(true);
   };
@@ -284,8 +290,8 @@ export const AdminDashboard = () => {
 
   const handleEditSubmit = async () => {
     try {
-      const authToken = localStorage.getItem('authToken');
       // console.log(authToken);
+      const authToken = localStorage.getItem('authToken');
       await axios.put(`http://localhost:5000/product/${editProduct.id}`,
         editProduct,
         {
@@ -294,29 +300,65 @@ export const AdminDashboard = () => {
       // console.log(editProduct);
       fetchProducts();
       setOpenEditModal(false);
+      showSnackbar("Product Updated Successfully", "success");
     } catch (error) {
-      console.error('Error updating product:', error);
+      showSnackbar('Error in updating product', "error");
     }
   };
+
+
+  const handleRevertClick = (productId) => {
+    const authToken = localStorage.getItem('authToken');
+    // console.log("Reverting product:", productId);
+    axios.put(`http://localhost:5000/product/revert/${productId}`, {}, {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    })
+      .then((response) => {
+        // console.log("Product reverted:", response.data);
+        setProducts(products.map(product =>
+          product.id === productId ? { ...product, isDeleted: false } : product
+        ));
+        showSnackbar("Product has been reverted successfully.", "success");
+      })
+      .catch(error => {
+        console.error("Error reverting product:", error);
+        showSnackbar("Failed to revert product.", "error");
+      });
+  };
+
 
   const handleDeleteConfirm = async () => {
     try {
       const authToken = localStorage.getItem('authToken');
-      await axios.delete(`http://localhost:5000/product/${deleteProductId}`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
+      console.log('Token : ', authToken);
+      // console.log('Delete Product ID:', deleteProductId); 
+      await axios.put(`http://localhost:5000/product/delete/${deleteProductId}`, null,
+        {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+
+      console.log('Product Deleted Successfully');
       fetchProducts();
       setOpenDeleteDialog(false);
+      showSnackbar("Product Deleted Successfully", "success");
+      // window.location.reload();
     } catch (error) {
-      console.error('Error deleting product:', error);
+      showSnackbar('Error while deleting the product', "error");
     }
   };
 
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/product/');
-      // console.log(response.data.products);
+      const authToken = localStorage.getItem('authToken');
+      const response = await axios.get('http://localhost:5000/product/allproducts/',
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+      // console.log("Fetch Product: ", response.data.products);
       setProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -374,8 +416,8 @@ export const AdminDashboard = () => {
         );
         setSnackbarMessage(`Order ${orderId} status updated to ${newStatus}`);
         setSnackbarSeverity('success');
-        window.location.reload();
         setSnackbarOpen(true);
+        fetchOrders();
 
       } else {
         alert('Failed to update order status.');
@@ -562,7 +604,7 @@ export const AdminDashboard = () => {
                 variant="outlined"
                 value={searchTerm}
                 onChange={handleProductSearch}
-                sx={{ ml:18,width: 300 }}
+                sx={{ ml: 18, width: 300 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -581,15 +623,15 @@ export const AdminDashboard = () => {
               </Button>
             </Box>
 
-            <Grid container spacing={3}>
+            {/* <Grid container spacing={3}>
               {products.slice((productPage - 1) * productsPerPage, productPage * productsPerPage).map((product) => (
                 <Grid item xs={4} sm={6} md={4} lg={4} key={product.id}>
                   <Card>
                     <Box sx={{
                       width: '100%',
-                      height: 200, // Set a fixed height for the image container
+                      height: 200, 
                       overflow: 'hidden',
-                      borderRadius: 1 // Optional: adds rounded corners
+                      borderRadius: 1 
                     }}>
                       <CardMedia
                         component="img"
@@ -615,9 +657,9 @@ export const AdminDashboard = () => {
                           Sales Price: ₹{product.salesPrice}
                         </Typography>
                       </Stack>
-                      {/* <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '1rem', color: 'green', mt: 2 }}>
+                       <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '1rem', color: 'green', mt: 2 }}>
                         <span style={{ textDecoration: 'line-through', color: 'grey' }}>MRP: ₹{product.mrp}</span> | SalesRate: ₹{product.salesPrice}
-                      </Typography> */}
+                      </Typography> 
                       <Box display="flex" justifyContent="space-between" alignItems="flex-end" mt={2}>
                         <IconButton onClick={() => handleEditClick(product)} sx={{ alignSelf: 'flex-start' }}>
                           <Edit />
@@ -631,7 +673,152 @@ export const AdminDashboard = () => {
                   </Card>
                 </Grid>
               ))}
+            </Grid> */}
+
+            {/* <Grid container spacing={3}>
+              {products.slice((productPage - 1) * productsPerPage, productPage * productsPerPage).map((product) => (
+                <Grid item xs={4} sm={6} md={4} lg={4} key={product.id}>
+                  <Card sx={{ position: "relative", opacity: product.isDeleted ? 0.5 : 1 }}>
+
+                     Show "Deleted" Badge if isDeleted: true 
+                    {product.isDeleted && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          left: 10,
+                          backgroundColor: "red",
+                          color: "white",
+                          padding: "5px 10px",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Deleted
+                      </Box>
+                    )}
+
+                    <Box sx={{ width: "100%", height: 200, overflow: "hidden", borderRadius: 1 }}>
+                      <CardMedia
+                        component="img"
+                        image={product.images[0] || "/api/placeholder/300/200"}
+                        alt={product.name}
+                        sx={{
+                          p: 2,
+                          height: "100%",
+                          width: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+
+                    <CardContent>
+                      <Typography variant="h6">{product.name}</Typography>
+                      <Stack direction="column" spacing={0.5}>
+                        <Typography variant="body2" sx={{ textDecoration: "line-through", color: "grey" }}>
+                          MRP: ₹{product.mrp}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.95rem", color: "green" }}>
+                          Sales Price: ₹{product.salesPrice}
+                        </Typography>
+                      </Stack>
+
+                      Conditionally Render Edit and Delete Icons
+                      {!product.isDeleted && (
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-end" mt={2}>
+                          <IconButton onClick={() => handleEditClick(product)} sx={{ alignSelf: "flex-start" }}>
+                            <Edit />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteClick(product.id)} sx={{ alignSelf: "flex-end" }}>
+                            <Trash color="red" />
+                          </IconButton>
+                        </Box>
+                       )}
+                    </CardContent>
+
+                  </Card>
+                </Grid>
+              ))}
+            </Grid> */}
+
+            <Grid container spacing={3}>
+              {products.slice((productPage - 1) * productsPerPage, productPage * productsPerPage).map((product) => (
+                <Grid item xs={4} sm={6} md={4} lg={4} key={product.id}>
+                  <Card sx={{ position: "relative", opacity: product.isDeleted ? 0.5 : 1 }}>
+
+                    {/* Show "Deleted" Badge if isDeleted: true */}
+                    {product.isDeleted && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          left: 10,
+                          backgroundColor: "red",
+                          color: "white",
+                          padding: "5px 10px",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Deleted
+                      </Box>
+                    )}
+
+                    <Box sx={{ width: "100%", height: 200, overflow: "hidden", borderRadius: 1 }}>
+                      <CardMedia
+                        component="img"
+                        image={product.images[0] || "/api/placeholder/300/200"}
+                        alt={product.name}
+                        sx={{
+                          p: 2,
+                          height: "100%",
+                          width: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </Box>
+
+                    <CardContent>
+                      <Typography variant="h6">{product.name}</Typography>
+                      <Stack direction="column" spacing={0.5}>
+                        <Typography variant="body2" sx={{ textDecoration: "line-through", color: "grey" }}>
+                          MRP: ₹{product.mrp}
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.95rem", color: "green" }}>
+                          Sales Price: ₹{product.salesPrice}
+                        </Typography>
+                      </Stack>
+
+                      {/* Conditionally Render Edit, Delete, and Revert Icons */}
+                      {!product.isDeleted ? (
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-end" mt={2}>
+                          <IconButton onClick={() => handleEditClick(product)} sx={{ alignSelf: "flex-start" }}>
+                            <Edit />
+                          </IconButton>
+                          <IconButton onClick={() => handleDeleteClick(product.id)} sx={{ alignSelf: "flex-end" }}>
+                            <Trash color="red" />
+                          </IconButton>
+                        </Box>
+                      ) : (
+                        <Box display="flex" justifyContent="center" mt={2}>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleRevertClick(product.id)}
+                          >
+                            Revert
+                          </Button>
+                        </Box>
+                      )}
+                    </CardContent>
+
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
+
 
             <Pagination
               count={Math.ceil(products.length / productsPerPage)}
@@ -931,7 +1118,7 @@ export const AdminDashboard = () => {
                     ),
                   }}
                   sx={{
-                    width: 250, ml:20,mr: -2, "& .MuiOutlinedInput-root": {
+                    width: 250, ml: 20, mr: -2, "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
                     },
                   }}
@@ -942,7 +1129,7 @@ export const AdminDashboard = () => {
                 startIcon={<Plus />}
                 color="primary"
                 onClick={() => setOpenModal(true)}
-                sx={{ height:"53px"}}
+                sx={{ height: "53px" }}
               >
                 Add New Category
               </Button>

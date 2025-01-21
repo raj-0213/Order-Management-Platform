@@ -127,6 +127,85 @@ exports.completeOrder = async (req, res) => {
 };
 
 // Update order status (Admin only)
+// exports.updateOrderStatus = async (req, res) => {
+//   const { orderId, status } = req.body;
+
+//   try {
+//     // Validate the provided status
+//     if (!['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+//       return res.status(400).json({ error: 'Invalid status' });
+//     }
+
+//     // Find the order by ID
+//     const order = await Order.findByPk(orderId, {
+//       include: [{ model: OrderDetails, include: Product }], // Include order details and associated products
+//     });
+
+//     if (!order) {
+//       return res.status(404).json({ error: 'Order not found' });
+//     }
+
+//     // Prevent status rollback or further updates if the order is cancelled
+//     if (order.status === 'cancelled') {
+//       return res.status(400).json({ error: 'Order is already cancelled and cannot be updated further.' });
+//     }
+
+//     // Prevent status rollback after reaching a certain stage (confirmed, shipped, delivered)
+//     const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered','cancelled'];
+//     const currentStatusIndex = statusOrder.indexOf(order.status);
+//     const newStatusIndex = statusOrder.indexOf(status);
+
+//     // Ensure the new status is either the same or a progression
+//     if (newStatusIndex < currentStatusIndex) {
+//       return res.status(400).json({ error: `Cannot rollback order status from '${order.status}' to '${status}'` });
+//     }
+
+//     // If changing status to "confirmed", validate stock and deduct quantities
+//     if (order.status === 'pending' && status === 'confirmed') {
+//       const insufficientStockProducts = [];
+
+//       // Validate stock for each product in the order
+//       for (const detail of order.OrderDetails) {
+//         const product = detail.Product;
+
+//         // Check stock availability
+//         if (detail.quantity > product.stockQuantity) {
+//           insufficientStockProducts.push({
+//             productId: product.id,
+//             productName: product.name,
+//             availableStock: product.stockQuantity,
+//           });
+//           continue; 
+//         }
+
+//         // Deduct stock quantity
+//         product.stockQuantity -= detail.quantity;
+
+//         // Save the updated product stock
+//         await product.save();
+//       }
+
+//       // If any product has insufficient stock, return an error
+//       if (insufficientStockProducts.length > 0) {
+//         return res.status(400).json({
+//           error: 'Insufficient stock for some products',
+//           insufficientStockProducts,
+//         });
+//       }
+//     }
+
+//     // Update the order status
+//     order.status = status;
+//     await order.save();
+
+//     res.status(200).json({ message: 'Order status updated', order });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
 exports.updateOrderStatus = async (req, res) => {
   const { orderId, status } = req.body;
 
@@ -151,7 +230,7 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     // Prevent status rollback after reaching a certain stage (confirmed, shipped, delivered)
-    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered','cancelled'];
+    const statusOrder = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
     const currentStatusIndex = statusOrder.indexOf(order.status);
     const newStatusIndex = statusOrder.indexOf(status);
 
@@ -185,12 +264,15 @@ exports.updateOrderStatus = async (req, res) => {
         await product.save();
       }
 
-      // If any product has insufficient stock, return an error
+      // If any product has insufficient stock, allow only cancellation
       if (insufficientStockProducts.length > 0) {
-        return res.status(400).json({
-          error: 'Insufficient stock for some products',
-          insufficientStockProducts,
-        });
+        // If the requested status is not 'cancelled', return an error
+        if (status !== 'cancelled') {
+          return res.status(400).json({
+            error: 'Insufficient stock for some products. Only cancellation is allowed.',
+            insufficientStockProducts,
+          });
+        }
       }
     }
 
@@ -205,68 +287,7 @@ exports.updateOrderStatus = async (req, res) => {
   }
 };
 
-// exports.updateOrderStatus = async (req, res) => {
-//   const { orderId, status } = req.body;
 
-//   try {
-//     // Validate the provided status
-//     if (!['pending', 'confirmed', 'shipped', 'delivered','cancelled'].includes(status)) {
-//       return res.status(400).json({ error: 'Invalid status' });
-//     }
-
-//     // Find the order by ID
-//     const order = await Order.findByPk(orderId, {
-//       include: [{ model: OrderDetails, include: Product }], // Include order details and associated products
-//     });
-
-//     if (!order) {
-//       return res.status(404).json({ error: 'Order not found' });
-//     }
-
-//     // If changing status to "confirmed", validate stock and deduct quantities
-//     if (order.status === 'pending' && status === 'confirmed') {
-//       const insufficientStockProducts = [];
-
-//       // Validate stock for each product in the order
-//       for (const detail of order.OrderDetails) {
-//         const product = detail.Product;
-
-//         // Check stock availability
-//         if (detail.quantity > product.stockQuantity) {
-//           insufficientStockProducts.push({
-//             productId: product.id,
-//             productName: product.name,
-//             availableStock: product.stockQuantity,
-//           });
-//           continue; // Skip further processing for this product
-//         }
-
-//         // Deduct stock quantity
-//         product.stockQuantity -= detail.quantity;
-
-//         // Save the updated product stock
-//         await product.save();
-//       }
-
-//       // If any product has insufficient stock, return an error
-//       if (insufficientStockProducts.length > 0) {
-//         return res.status(400).json({
-//           error: 'Insufficient stock for some products',
-//           insufficientStockProducts,
-//         });
-//       }
-//     }
-
-//     // Update the order status
-//     order.status = status;
-//     await order.save();
-
-//     res.status(200).json({ message: 'Order status updated', order });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 
 // For Admin Only
 exports.getAllOrders = async (req, res) => {
@@ -281,16 +302,14 @@ exports.getAllOrders = async (req, res) => {
 // Get all orders for a user
 exports.getOrders = async (req, res) => {
   try {
-     // Decode the token from the Authorization header
-     const token = req.headers.authorization.split(' ')[1]; // Assuming the token is passed as "Bearer <token>"
+     const token = req.headers.authorization.split(' ')[1]; 
 
      if (!token) {
        return res.status(401).json({ error: 'Authorization token is missing' });
      }
  
-     const decoded = jwt.verify(token, "secret"); // Verify and decode the token
-     const userId = decoded.userId; // Extract the userId from the token
-
+     const decoded = jwt.verify(token, "secret"); 
+     const userId = decoded.userId;
     const orders = await Order.findAll({
       where: { userId },
       include: [

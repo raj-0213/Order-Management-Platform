@@ -117,6 +117,11 @@ module.exports = (sequelize, Sequelize) => {
           min: 1, 
         },
       },
+      isDeleted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: 'products', 

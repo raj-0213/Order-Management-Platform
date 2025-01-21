@@ -66,6 +66,11 @@ module.exports = (sequelize, Sequelize) => {
           },
         },
       },
+      issDeleted: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: 'users',  // Optional: You can specify the table name explicitly here

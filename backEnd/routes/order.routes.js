@@ -19,7 +19,7 @@ const { verifyToken, isAdmin, isCustomer } = require('../middlewares/authMiddlew
 router.post('/complete', verifyToken, completeOrder);
 router.put('/updatestatus', verifyToken, isAdmin, updateOrderStatus);
 router.get('/allorders', verifyToken, isAdmin, getAllOrders);
-router.get('/myorder', verifyToken, getOrders);
+router.get('/myorder', getOrders);
 
 
 module.exports = router;

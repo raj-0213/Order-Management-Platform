@@ -62,15 +62,24 @@ exports.getUserProfile = async (req, res) => {
 };
 
 
-// GET: Fetch all users (Admin Only)
-exports.getAllUsers =  async (req, res) => {
-    try {
-        const users = await User.findAll({ attributes: { exclude: ['password'] } }); 
-        res.status(200).json({ success: true, users });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
-    }
+// GET: Fetch all active users (Admin Only)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      where: { issDeleted: false }, 
+      attributes: { exclude: ["password"] },
+    });
+
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
 };
+
 
 
 exports.editProfile = async (req, res) => {
@@ -118,22 +127,20 @@ exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Find the user by ID
-    const user = await User.findOne({ where: { id } });
+    // Find the user by ID (excluding already deleted users)
+    const user = await User.findOne({ where: { id, issDeleted: false } });
 
-    // If user doesn't exist
+    // If user doesn't exist or already deleted
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found or already deleted" });
     }
 
-    // Delete the user
-    await User.destroy({
-      where: { id }
-    });
+    // Soft delete the user
+    await user.update({ issDeleted: true });
 
-    return res.status(200).json({ message: 'User deleted successfully' });
+    return res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error('Error deleting user:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Error deleting user:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

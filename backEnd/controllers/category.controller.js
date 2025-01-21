@@ -17,10 +17,13 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-// Get All Categories
+// Get All Active Categories (Exclude Soft Deleted)
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.findAll();
+    const categories = await Category.findAll({
+      where: { isDeleted: false }, 
+    });
+
     res.status(200).json({ categories });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -59,21 +62,26 @@ exports.updateCategory = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
-// Delete Category
+// Soft Delete Category
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const category = await Category.findByPk(id);
-    if (category) {
-      await category.destroy();
-      res.status(200).json({ message: "Category deleted successfully" });
-    } else {
-      res.status(404).json({ message: "Category not found" });
+
+    // Find category that is not already deleted
+    const category = await Category.findOne({ where: { id, isDeleted: false } });
+
+    if (!category) {
+      return res.status(404).json({ message: "Category not found or already deleted" });
     }
+
+    // Soft delete the category
+    await category.update({ isDeleted: true });
+
+    res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 

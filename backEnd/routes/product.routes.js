@@ -11,20 +11,26 @@ const {
     getAllProducts, 
     getProductById, 
     updateProduct, 
-    deleteProduct, 
+    deleteProduct,
+    getAllProductsforAdmin,
+    revertProduct, 
 } = require("../controllers/product.controller");
 
 router.post("/create", verifyToken, isAdmin , upload.array("images", 10), validateProduct, createProduct); 
 
 router.get("/", getAllProducts);
 
+router.get("/allproducts", verifyToken, isAdmin, getAllProductsforAdmin);
+
 // router.get("/category/:categoryId", verifyToken, getProductByCategory);
 
-router.get("/:id", verifyToken, isAdmin, getProductById);
+// router.get("/:id", verifyToken, isAdmin, getProductById);
 
 router.put("/:id", verifyToken,isAdmin, upload.array("images"),updateProduct);
 
-router.delete("/:id",verifyToken, isAdmin, deleteProduct);
+router.put("/revert/:productId", verifyToken,isAdmin,revertProduct);
+
+router.put("/delete/:id",verifyToken, isAdmin, deleteProduct);
 
 
 module.exports = router;

@@ -186,7 +186,7 @@ const ProductList = () => {
   const [page, setPage] = useState(1);
   const [notification, setNotification] = useState(null);
 
-  const productsPerPage = 8;
+  const productsPerPage = 16;
 
   const handleShowNotification = (message, severity = 'success') => {
     setNotification({ message, severity });
@@ -202,7 +202,7 @@ const ProductList = () => {
       try {
         const response = await axios.get('http://localhost:5000/product/');
         const filteredProducts = response.data.products.filter(product => product.stockQuantity >= 1);
-        // console.log("Filtered Products : ", filteredProducts);
+        console.log("Filtered Products : ", filteredProducts);
         setProducts(filteredProducts);
         // setProducts(response.data.products);
         // console.log("Data : ", response.data.products);
