@@ -7,6 +7,18 @@ exports.register = async (req, res) => {
   try {
     const { username, email, password, role, mobileNo, dob, address } = req.body;
 
+    // Check if email already exists
+    const existingEmail = await User.findOne({ where: { email } });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+
+    // Check if mobile number already exists
+    const existingMobileNo = await User.findOne({ where: { mobileNo } });
+    if (existingMobileNo) {
+      return res.status(400).json({ error: 'Mobile number already in use' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
       username,

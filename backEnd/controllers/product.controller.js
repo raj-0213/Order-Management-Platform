@@ -63,7 +63,7 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, wsCode, salesPrice, mrp, packageSize, stockQuantity, tags, categoryId, images } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const product = await Product.findByPk(id);
 
     if (!product) {

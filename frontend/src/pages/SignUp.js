@@ -76,7 +76,7 @@ const SignUpPage = () => {
             setIsLoading(true);
             try {
                 const response = await axios.post('http://localhost:5000/user/register', { ...formData, role: 'customer' });
-                console.log('Registration successful:', response.data);
+                // console.log('Registration successful:', response.data);
 
                 // Save email and password to browser (localStorage)
                 localStorage.setItem('email', formData.email);
@@ -85,9 +85,23 @@ const SignUpPage = () => {
                 // Redirect to login
                 navigate('/login');
             } catch (error) {
-                console.error('Registration failed:', error.response?.data || error.message);
-                setSnackbarMessage('Registration failed. Please try again.');
+
+                console.error('Registration failed:', error.response.data.error);
+                setSnackbarMessage(error.response.data.error);
                 setOpenSnackbar(true);
+
+                if (error.message.includes('Email')) {
+                    setErrors(prevErrors => ({
+                        ...prevErrors,
+                        email: error.message
+                    }));
+                }
+                if (error.message.includes('Mobile number')) {
+                    setErrors(prevErrors => ({
+                        ...prevErrors,
+                        mobileNo: error.message
+                    }));
+                }
             } finally {
                 setIsLoading(false);
             }

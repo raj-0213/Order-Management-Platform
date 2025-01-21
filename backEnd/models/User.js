@@ -40,6 +40,7 @@ module.exports = (sequelize, Sequelize) => {
       mobileNo: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique:true,
         validate: {
           is: {
             args: /^[0-9]{10}$/, // Assuming a 10-digit mobile number
